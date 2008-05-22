@@ -16,9 +16,20 @@ Object.extend(String.prototype, {
     return parseInt(this);
   },
   
+  tr: function(from, to)
+  {
+    var subst;
+    var str = this;
+    for (i = 0; i < from.length; i++) {
+      subst = (to[i]) ? to[i] : to[to.length-1];
+      str = str.replace(new RegExp(str[str.indexOf(from[i])], 'g'), subst);
+    }
+    return str;
+  }
+  
   toSlug: function()
   {
-    return this.strip().downcase().replace(/[^-a-z0-9~\s\.:;+=_]/g, '').replace(/[\s\.:;=+]+/g, '-');
+    return this.strip().downcase().tr('æøå', 'eoa').replace(/[^-a-z0-9~\s\.:;+=_]/g, '').replace(/[\s\.:;=+]+/g, '-');
   }
 
 });
