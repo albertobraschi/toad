@@ -294,7 +294,7 @@ class Page
             return $this->parent($level);
     }
     
-    public function includeSnippet($name)
+    public function snippet($name)
     {
         global $__FROG_CONN__;
         
@@ -307,6 +307,12 @@ class Page
         {
             eval('?>'.$snippet->content_html);
         }
+    }
+    
+    // Keeping this for now for backwards compability
+    public function includeSnippet($name)
+    {
+        $this->snippet($name);
     }
     
     public function executionTime()
