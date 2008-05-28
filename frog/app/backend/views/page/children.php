@@ -13,12 +13,18 @@
           <img align="middle" alt="" class="busy" id="busy-<?php echo $child->id; ?>" src="images/spinner.gif" style="display: none;" title="" />
         </span>
       </div>
-<?php switch ($child->status_id) {
-      case Page::STATUS_DRAFT: echo '<div class="status draft-status">'.__('Draft').'</div>'; break;
-      case Page::STATUS_REVIEWED: echo '<div class="status reviewed-status">'.__('Reviewed').'</div>'; break;
-      case Page::STATUS_PUBLISHED: echo '<div class="status published-status">'.__('Published').'</div>'; break;
-      case Page::STATUS_HIDDEN: echo '<div class="status hidden-status">'.__('Hidden').'</div>'; break;
-} ?> 
+  <?php switch ($child->status_id) {
+      case Page::STATUS_DRAFT:
+      echo '<a href="'. get_url('page/publish/'.$child->id) .
+           '" class="red"><div class="status draft-status">'.__('Draft').'</a></div>'; break;
+      case Page::STATUS_REVIEWED:
+      echo '<div class="status reviewed-status">'.__('Reviewed').'</div>'; break;
+      case Page::STATUS_PUBLISHED:
+      echo '<a href="' . get_url('page/unpublish/'.$child->id) .
+           '"><div class="status published-status">'.__('Published').'</a></div>'; break;
+      case Page::STATUS_HIDDEN:
+      echo '<div class="status hidden-status">'.__('Hidden').'</div>'; break;
+      } ?> 
       <div class="modify">
         <a href="<?php echo get_url('page/add', $child->id); ?>"><img src="images/plus.png" align="middle" alt="<?php echo __('Add child'); ?>" /></a>&nbsp; 
 <?php if ( ! $child->is_protected || AuthUser::hasPermission('administrator') || AuthUser::hasPermission('developer')): ?>

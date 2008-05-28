@@ -245,12 +245,54 @@ class PageController extends Controller
             redirect(get_url('page/edit/'.$id));
     }
     
+    public function publish($id)
+    {
+        if ($id > 1) {
+            if ($page = Record::findByIdFrom('Page', $id)) {
+                if (! AuthUser::hasPermission('administrator') && ! AuthUser::hasPermission('developer') && $page->is_protected) {
+                    Flash::set('error', __('You do not have permission to access the requested page!'));
+                    redirect(get_url('page'));
+                }
+                $page->status_id = Page::STATUS_PUBLISHED;
+                $page->save();
+                Flash::set('success', __('Page :title has been published!', array(':title'=>$page->title)));
+            } else {
+                Flash::set('error', __('Page not found!'));
+            }
+        } else {
+            Flash::set('error', __('Action disabled!'));
+        }
+        
+        redirect(get_url('page'));
+    }
+    
+    public function unpublish($id)
+    {
+        if ($id > 1) {
+            if ($page = Record::findByIdFrom('Page', $id)) {
+                if (! AuthUser::hasPermission('administrator') && ! AuthUser::hasPermission('developer') && $page->is_protected) {
+                    Flash::set('error', __('You do not have permission to access the requested page!'));
+                    redirect(get_url('page'));
+                }
+                $page->status_id = Page::STATUS_DRAFT;
+                $page->save();
+                Flash::set('success', __('Page :title has been unpublished!', array(':title'=>$page->title)));
+            } else {
+                Flash::set('error', __('Page not found!'));
+            }
+        } else {
+            Flash::set('error', __('Action disabled!'));
+        }
+        
+        redirect(get_url('page'));
+    }
+    
     public function delete($id)
     {
         // security (dont delete the root page)
         if ($id > 1)
         {
-            // find the user to delete
+            // find the page to delete
             if ($page = Record::findByIdFrom('Page', $id))
             {
                 // check for permission to delete this page
