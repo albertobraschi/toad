@@ -166,8 +166,8 @@ class Page extends Record
         $tablename_user = self::tableNameFromClassName('User');
         
         // Prepare SQL
-        $sql = "SELECT page.*, creator.name AS created_by_name, updator.name AS updated_by_name FROM $tablename AS page".
-               " LEFT JOIN $tablename_user AS creator ON page.created_by_id = creator.id".
+        $sql = "SELECT page.*, author.name AS created_by_name, updator.name AS updated_by_name FROM $tablename AS page".
+               " LEFT JOIN $tablename_user AS author ON page.created_by_id = author.id".
                " LEFT JOIN $tablename_user AS updator ON page.updated_by_id = updator.id".
                " $where_string $order_by_string $limit_string";
         

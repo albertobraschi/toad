@@ -1,0 +1,4 @@
+# TODO
+  * Make stuff more DRY (i.e the sql statements)
+  * Checkbox for disabling user accounts
+  * Closer match with Radiant's db schema

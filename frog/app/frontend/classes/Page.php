@@ -54,13 +54,13 @@ class Page
     const STATUS_PUBLISHED = 100;
     const STATUS_HIDDEN = 101;
 
-    public $id;
+    public $id = 0;
     public $title = '';
     public $breadcrumb;
-    public $author;
-    public $author_id;
-    public $updator;
-    public $updator_id;
+    public $author = '';
+    public $author_id = 0;
+    public $updator = '';
+    public $updator_id = 0;
     public $slug = '';
     public $url = '';
 

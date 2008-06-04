@@ -51,8 +51,8 @@ class Layout extends Record
         $tablename_user = self::tableNameFromClassName('User');
         
         // Prepare SQL
-        $sql = "SELECT $tablename.*, creator.name AS created_by_name, updator.name AS updated_by_name FROM $tablename".
-               " LEFT JOIN $tablename_user AS creator ON $tablename.created_by_id = creator.id".
+        $sql = "SELECT $tablename.*, author.name AS created_by_name, updator.name AS updated_by_name FROM $tablename".
+               " LEFT JOIN $tablename_user AS author ON $tablename.created_by_id = author.id".
                " LEFT JOIN $tablename_user AS updator ON $tablename.updated_by_id = updator.id".
                " $where_string $order_by_string $limit_string";
         
