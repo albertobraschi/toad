@@ -25,7 +25,7 @@ Object.extend(String.prototype, {
       str = str.replace(new RegExp(str[str.indexOf(from[i])], 'g'), subst);
     }
     return str;
-  }
+  },
   
   toSlug: function()
   {
