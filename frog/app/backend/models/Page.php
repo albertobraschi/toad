@@ -41,8 +41,12 @@ class Page extends Record
         $this->created_by_id = AuthUser::getId();
         $this->created_on = date('Y-m-d H:i:s');
         
-        if ($this->status_id == Page::STATUS_PUBLISHED)
-            $this->created_on = date('Y-m-d H:i:s');
+        $this->updated_on = $this->updated_on;
+        $this->updated_by_id = $this->created_by_id;
+        
+        if ($this->status_id == Page::STATUS_PUBLISHED) {
+            $this->published_on = date('Y-m-d H:i:s');
+        }
         
         return true;
     }
