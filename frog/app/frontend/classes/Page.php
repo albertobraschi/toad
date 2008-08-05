@@ -390,8 +390,19 @@ class Page
             $this->tags[$object->id] = $object->tag;
     }
 
-    // PATH HELPERS:
+    // HELPERS:
+    // TODO these should be factored out somewhere else
 
+    public function link_to($url, $label, $options='')
+    {
+        return sprintf('<a href="%s" %s>%s</a>',
+            $url,
+            $options,
+            $label
+            );
+    }
+
+    // Paths
     private function publicPath($source, $dir, $ext = false)
     {
         $t = explode(".", $source);
