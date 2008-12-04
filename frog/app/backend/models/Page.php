@@ -228,6 +228,16 @@ class Page extends Record
         $clone->title .= " (copy)";
         $clone->save();
         
+        /* Also clone the page parts. */
+        $page_part = PagePart::findByPageId($page->id);
+        if (count($page_part)) {
+            foreach ($page_part as $part) {
+                $part->page_id = $clone->id;
+                $part->id = null;
+                $part->save();
+            }
+        }
+        
         /* This gets set only once even when called recursively. */
         if (!$new_root_id) {
             $new_root_id = $clone->id;
