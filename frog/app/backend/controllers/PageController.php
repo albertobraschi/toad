@@ -104,6 +104,10 @@ class PageController extends Controller
             $page->saveTags($_POST['page_tag']['tags']);
             
             Flash::set('success', __('Page has been saved!'));
+            
+            /* Successfully saved so notify. */
+            Observer::notify('page_add_after_save', $page);
+            
         }
         else
         {
@@ -231,6 +235,9 @@ class PageController extends Controller
             $page->saveTags($_POST['page_tag']['tags']);
             
             Flash::set('success', __('Page has been saved!'));
+            
+            /* Successfully edited so notify. */
+            Observer::notify('page_edit_after_save', $page);
         }
         else
         {
@@ -305,10 +312,14 @@ class PageController extends Controller
                 // need to delete all page_parts too !!
                 PagePart::deleteByPageId($id);
                 
-                if ($page->delete())
-                    Flash::set('success', __('Page :title has been deleted!', array(':title'=>$page->title)));
+                if ($page->delete()) {
+                    Flash::set('success', __('Page :title has been deleted!', array(':title'=>$page->title)));                
+                    Observer::notify('page_delete', $page);
+                }
                 else
-                    Flash::set('error', __('Page :title has not been deleted!', array(':title'=>$page->title)));
+                {
+                    Flash::set('error', __('Page :title has not been deleted!', array(':title'=>$page->title)));                    
+                }
             }
             else Flash::set('error', __('Page not found!'));
         }

@@ -125,6 +125,9 @@ else // list of fonctions, classes used by the frontend
 				$__FROG_CONN__->quote(date('Y-m-d H:i:s')).')';
 
 		$__FROG_CONN__->exec($sql);
+		
+		Observer::notify('comment_after_add');
+        
 	}
 
 	class Comment
