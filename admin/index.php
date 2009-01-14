@@ -4,10 +4,9 @@
 
 define('FROG_VERSION', '0.9.3');
 
-define('FROG_ROOT', dirname(__FILE__).'/..');
-define('CORE_ROOT', FROG_ROOT.'/frog');
-
-define('APP_PATH',  CORE_ROOT.'/app/backend');
+define('FROG_ROOT', dirname(__FILE__) . '/..');
+define('CORE_ROOT', FROG_ROOT . '/frog');
+define('APP_PATH',  CORE_ROOT . '/app');
 
 define('SESSION_LIFETIME', 3600);
 define('REMEMBER_LOGIN_LIFETIME', 1209600); // two weeks

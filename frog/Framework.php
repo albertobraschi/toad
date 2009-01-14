@@ -1105,12 +1105,14 @@ function html_encode($string)
 /**
  * Display a 404 page not found and exit
  */
+ /*
 function page_not_found()
 {
     header("HTTP/1.0 404 Not Found");
     echo new View('404');
     exit;
 }
+*/
 
 function convert_size($num)
 {
