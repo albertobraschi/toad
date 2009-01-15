@@ -12,8 +12,9 @@ class PageController extends Controller
     public function __construct()
     {
         AuthUser::load();
-        if ( ! AuthUser::isLoggedIn())
-            redirect(get_url('login'));
+        if (!AuthUser::isLoggedIn()) {
+            redirect(get_url('login'));            
+        }
     }
     
     public function index()
@@ -28,8 +29,9 @@ class PageController extends Controller
     public function add($parent_id=1)
     {
         // check if trying to save
-        if (get_request_method() == 'POST')
-            return $this->_add();
+        if (get_request_method() == 'POST') {
+            return $this->_add();            
+        }
         
         $data = Flash::get('post_data');
         $page = new Page($data);
@@ -38,25 +40,22 @@ class PageController extends Controller
         
         $page_parts = Flash::get('post_parts_data');
         
-        if (empty($page_parts))
-        {
+        if (empty($page_parts)) {
             // check if we have a big sister ...
             $big_sister = Record::findOneFrom('Page', 'parent_id=? ORDER BY id DESC', array($parent_id));
-            if ($big_sister)
-            {
+            if ($big_sister) {
                 // get all is part and create the same for the new little sister
                 $big_sister_parts = Record::findAllFrom('PagePart', 'page_id=? ORDER BY id', array($big_sister->id));
                 $page_parts = array();
-                foreach ($big_sister_parts as $parts)
-                {
+                foreach ($big_sister_parts as $parts) {
                     $page_parts[] = new PagePart(array(
                         'name' => $parts->name,
                         'filter_id' => Setting::get('default_filter_id')
                     ));
                 }
+            } else {
+                $page_parts = array(new PagePart(array('filter_id' => Setting::get('default_filter_id'))));                
             }
-            else
-                $page_parts = array(new PagePart(array('filter_id' => Setting::get('default_filter_id'))));
         }
         
         // display things ...
@@ -77,8 +76,7 @@ class PageController extends Controller
         $data = $_POST['page'];
         Flash::set('post_data', (object) $data);
         
-        if (empty($data['title']))
-        {
+        if (empty($data['title'])) {
             Flash::set('error', __('You have to specify a title!'));
             redirect(get_url('page/add'));
         }
@@ -86,14 +84,12 @@ class PageController extends Controller
         $page = new Page($data);
         
         // save page data
-        if ($page->save())
-        {
+        if ($page->save()) {
             // get data from user
             $data_parts = $_POST['part'];
             Flash::set('post_parts_data', (object) $data_parts);
             
-            foreach ($data_parts as $data)
-            {
+            foreach ($data_parts as $data) {
                 $data['page_id'] = $page->id;
                 $data['name'] = trim($data['name']);
                 $page_part = new PagePart($data);
@@ -108,18 +104,17 @@ class PageController extends Controller
             /* Successfully saved so notify. */
             Observer::notify('page_add_after_save', $page);
             
-        }
-        else
-        {
+        } else {
             Flash::set('error', __('Page has not been saved!'));
             redirect(get_url('page/add'));
         }
         
         // save and quit or save and continue editing ?
-        if (isset($_POST['commit']))
-            redirect(get_url('page'));
-        else
-            redirect(get_url('page/edit/'.$page->id));
+        if (isset($_POST['commit'])) {
+            redirect(get_url('page'));        
+        } else {
+            redirect(get_url('page/edit/'.$page->id));            
+        }
     }
     
     public function addPart()
@@ -135,33 +130,34 @@ class PageController extends Controller
     
     public function edit($id=null)
     {
-        if (is_null($id))
-            redirect(get_url('page'));
+        if (is_null($id)) {
+            redirect(get_url('page'));            
+        }
         
         $page = Page::findById($id);
         
-        if ( ! $page)
-        {
+        if (!$page) {
             Flash::set('error', __('Page not found!'));
             redirect(get_url('page'));
         }
         
         // check for protected page and editor user
-        if ( ! AuthUser::hasPermission('administrator') && ! AuthUser::hasPermission('developer') && $page->is_protected)
-        {
+        if (!AuthUser::hasPermission('administrator') && ! AuthUser::hasPermission('developer') && $page->is_protected) {
             Flash::set('error', __('You do not have permission to access the requested page!'));
             redirect(get_url('page'));
         }
         
         // check if trying to save
-        if (get_request_method() == 'POST')
-            return $this->_edit($id);
+        if (get_request_method() == 'POST') {
+            return $this->_edit($id);            
+        }
         
         // find all page_part of this pages
         $page_parts = PagePart::findByPageId($id);
         
-        if (empty($page_parts))
-            $page_parts = array(new PagePart);
+        if (empty($page_parts)) {
+            $page_parts = array(new PagePart);            
+        }
         
         // display things ...
         $this->setLayout('backend');
@@ -189,8 +185,7 @@ class PageController extends Controller
         
         Observer::notify('page_edit_before_save');
         
-        if ($page->save())
-        {
+        if ($page->save()) {
             // get data for parts of this page
             $data_parts = $_POST['part'];
             
@@ -198,14 +193,11 @@ class PageController extends Controller
             
             // check if all old page part are passed in POST
             // if not ... we need to delete it!
-            foreach ($old_parts as $old_part)
-            {
+            foreach ($old_parts as $old_part) {
                 $not_in = true;
-                foreach ($data_parts as $part_id => $data)
-                {
+                foreach ($data_parts as $part_id => $data) {
                     $data['name'] = trim($data['name']);
-                    if ($old_part->name == $data['name'])
-                    {
+                    if ($old_part->name == $data['name']) {
                         $not_in = false;
                         
                         $part = new PagePart($data);
@@ -218,13 +210,13 @@ class PageController extends Controller
                     }
                 }
                 
-                if ($not_in)
-                    $old_part->delete();
+                if ($not_in) {
+                    $old_part->delete();                    
+                }
             }
             
             // add the new ones
-            foreach ($data_parts as $part_id => $data)
-            {
+            foreach ($data_parts as $part_id => $data) {
                 $data['name'] = trim($data['name']);
                 $part = new PagePart($data);
                 $part->page_id = $id;
@@ -238,18 +230,17 @@ class PageController extends Controller
             
             /* Successfully edited so notify. */
             Observer::notify('page_edit_after_save', $page);
-        }
-        else
-        {
+        } else {
             Flash::set('error', __('Page has not been saved!'));
             redirect(get_url('page/edit/'.$id));
         }
         
         // save and quit or save and continue editing ?
-        if (isset($_POST['commit']))
-            redirect(get_url('page'));
-        else
-            redirect(get_url('page/edit/'.$id));
+        if (isset($_POST['commit'])) {
+            redirect(get_url('page'));            
+        } else {
+            redirect(get_url('page/edit/'.$id));            
+        }
     }
     
     public function publish($id)
@@ -297,14 +288,11 @@ class PageController extends Controller
     public function delete($id)
     {
         // security (dont delete the root page)
-        if ($id > 1)
-        {
+        if ($id > 1) {
             // find the page to delete
-            if ($page = Record::findByIdFrom('Page', $id))
-            {
+            if ($page = Record::findByIdFrom('Page', $id)) {
                 // check for permission to delete this page
-                if ( ! AuthUser::hasPermission('administrator') && ! AuthUser::hasPermission('developer') && $page->is_protected)
-                {
+                if (!AuthUser::hasPermission('administrator') && ! AuthUser::hasPermission('developer') && $page->is_protected) {
                     Flash::set('error', __('You do not have permission to access the requested page!'));
                     redirect(get_url('page'));
                 }
@@ -315,33 +303,33 @@ class PageController extends Controller
                 if ($page->delete()) {
                     Flash::set('success', __('Page :title has been deleted!', array(':title'=>$page->title)));                
                     Observer::notify('page_delete', $page);
-                }
-                else
-                {
+                } else {
                     Flash::set('error', __('Page :title has not been deleted!', array(':title'=>$page->title)));                    
                 }
+            } else {
+                Flash::set('error', __('Page not found!'));
             }
-            else Flash::set('error', __('Page not found!'));
-        }
-        else Flash::set('error', __('Action disabled!'));
+        } else {
+            Flash::set('error', __('Action disabled!'));            
+        } 
         
         redirect(get_url('page'));
     }
     
     function children($parent_id, $level, $return=false)
     {
-        $expanded_rows = isset($_COOKIE['expanded_rows']) ? explode(',', $_COOKIE['expanded_rows']): array();
+        $expanded_rows = isset($_COOKIE['expanded_rows']) ? explode(',', $_COOKIE['expanded_rows']) : array();
         
         // get all children of the page (parent_id)
         $childrens = Page::childrenOf($parent_id);
         
-        foreach ($childrens as $index => $child)
-        {
+        foreach ($childrens as $index => $child) {
             $childrens[$index]->has_children = Page::hasChildren($child->id);
-            $childrens[$index]->is_expanded = in_array($child->id, $expanded_rows);
+            $childrens[$index]->is_expanded  = in_array($child->id, $expanded_rows);
             
-            if ($childrens[$index]->is_expanded)
-                $childrens[$index]->children_rows = $this->children($child->id, $level+1, true);
+            if ($childrens[$index]->is_expanded) {
+                $childrens[$index]->children_rows = $this->children($child->id, $level+1, true);                
+            }
         }
         
         $content = new View('page/children', array(
@@ -349,8 +337,9 @@ class PageController extends Controller
             'level'    => $level+1,
         ));
         
-        if ($return)
-            return $content;
+        if ($return) {
+            return $content;            
+        }
         
         echo $content;
     }
@@ -365,13 +354,11 @@ class PageController extends Controller
     {
         parse_str($_POST['data']);
         
-        foreach ($pages as $position => $page_id)
-        {
+        foreach ($pages as $position => $page_id) {
             $page = Record::findByIdFrom('Page', $page_id);
             $page->position = (int) $position;
             $page->parent_id = (int) $parent_id;
             $page->save();
-            
         }
     }
     
@@ -386,8 +373,7 @@ class PageController extends Controller
         $page = Record::findByIdFrom('Page', $dragged_id);        
         $new_root_id = Page::cloneTree($page, $parent_id);
         
-        foreach ($pages as $position => $page_id)
-        {
+        foreach ($pages as $position => $page_id) {
             if ($page_id == $dragged_id) {
                 /* Move the cloned tree, not original. */
                 $page = Record::findByIdFrom('Page', $new_root_id);

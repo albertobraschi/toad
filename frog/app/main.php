@@ -1,13 +1,10 @@
 <?php
 
-require APP_PATH . '/classes/Plugin.php'; // Setting, Plugin, Behavior and Filter classes
-
+/* TODO: Get rid of this class. */
 require APP_PATH . '/classes/Page.php';
 
-require APP_PATH . '/models/Setting.php';
-
-if ( ! defined('HELPER_PATH')) define('HELPER_PATH', CORE_ROOT.'/helpers');
-if ( ! defined('URL_SUFFIX')) define('URL_SUFFIX', '');
+if (!defined('HELPER_PATH')) define('HELPER_PATH', CORE_ROOT . '/helpers');
+if (!defined('URL_SUFFIX'))  define('URL_SUFFIX',  '');
 
 ini_set('date.timezone', DEFAULT_TIMEZONE);
 if (function_exists('date_default_timezone_set')) {
@@ -18,19 +15,22 @@ if (function_exists('date_default_timezone_set')) {
 
 use_helper('I18n');
 
-// Intialize Setting and Plugin
+/* TODO: Do the need to be initialized? Use Lazy Loading instead. */
+/* Intialize Setting and Plugin. */
 Setting::init();
 Plugin::init();
 
 /**
  * Explode an URI and make a array of params
+ * TODO: Shouldn't these be in helpers?
  */
-function explode_uri($uri)
+function explode_uri($uri) 
 {
     return preg_split('/\//', $uri, -1, PREG_SPLIT_NO_EMPTY);
 }
 
-function find_page_by_uri($uri)
+/* TODO: This should be part of Page model. */
+function find_page_by_uri($uri) 
 {
     global $__FROG_CONN__;
     
@@ -38,7 +38,7 @@ function find_page_by_uri($uri)
     
     $has_behavior = false;
     
-    // adding the home root
+    /* Adding the home root. */
     $urls = array_merge(array(''), explode_uri($uri));
     $url = '';
  
@@ -47,34 +47,29 @@ function find_page_by_uri($uri)
     
     $parent = false;
     
-    foreach ($urls as $page_slug)
-    {
+    foreach ($urls as $page_slug) {
         $url = ltrim($url . '/' . $page_slug, '/');
         
-        if ($page = find_page_by_slug($page_slug, $parent))
-        {
+        if ($page = find_page_by_slug($page_slug, $parent)) {
             // check for behavior
-            if ($page->behavior_id != '')
-            {
+            if ($page->behavior_id != '') {
                 // add a instance of the behavior with the name of the behavior 
                 $params = explode_uri(substr($uri, strlen($url)));
                 $page->{$page->behavior_id} = Behavior::load($page->behavior_id, $page, $params);
                 
                 return $page;
             }
-        }
-        else
-        {
+        } else {
             break;
         }
         
-        $parent = $page;
-        
-    } // foreach
+        $parent = $page;  
+    } 
     
-    return ( ! $page && $has_behavior) ? $parent: $page;
-} // find_page_by_slug
+    return (!$page && $has_behavior) ? $parent: $page;
+} 
 
+/* TODO: This should be part of Page model. */
 function find_page_by_slug($slug, &$parent)
 {
     global $__FROG_CONN__;
@@ -93,11 +88,9 @@ function find_page_by_slug($slug, &$parent)
     
     $stmt->execute(array($slug, $parent_id));
     
-    if ($page = $stmt->fetchObject())
-    {
+    if ($page = $stmt->fetchObject()) {
         // hook to be able to redefine the page class with behavior
-        if ( ! empty($parent->behavior_id))
-        {
+        if (! empty($parent->behavior_id)) {
             // will return Page by default (if not found!)
             $page_class = Behavior::loadPageHack($parent->behavior_id);
         }
@@ -109,8 +102,9 @@ function find_page_by_slug($slug, &$parent)
         $page->part = get_parts($page->id);
         
         return $page;
+    } else {
+        return false;
     }
-    else return false;
 }
 
 function get_parts($page_id)
@@ -121,12 +115,12 @@ function get_parts($page_id)
     
     $sql = 'SELECT name, content_html FROM '.TABLE_PREFIX.'page_part WHERE page_id=?';
     
-    if ($stmt = $__FROG_CONN__->prepare($sql))
-    {
+    if ($stmt = $__FROG_CONN__->prepare($sql)) {
         $stmt->execute(array($page_id));
         
-        while ($part = $stmt->fetchObject())
-            $objPart->{$part->name} = $part;
+        while ($part = $stmt->fetchObject()) {
+            $objPart->{$part->name} = $part;            
+        }
     }
     
     return $objPart;
@@ -136,8 +130,9 @@ function url_match($url)
 {
     $url = trim($url, '/');
     
-    if (CURRENT_URI == $url)
-        return true;
+    if (CURRENT_URI == $url) {
+        return true;        
+    }
     
     return false;
 }
@@ -146,11 +141,13 @@ function url_start_with($url)
 {
     $url = trim($url, '/');
     
-    if (CURRENT_URI == $url)
-        return true;
+    if (CURRENT_URI == $url) {
+        return true;        
+    }
     
-    if (strpos(CURRENT_URI, $url) === 0)
-        return true;
+    if (strpos(CURRENT_URI, $url) === 0) {
+        return true;        
+    }
     
     return false;
 }
@@ -166,43 +163,39 @@ function page_not_found()
 
 function main()
 {
-    // get the uri string from the query
+    /* Get the uri string from the query. */
     $uri = $_SERVER['QUERY_STRING'];
     
-    // real integration of GET
-    if (strpos($uri, '?') !== false)
-    {
+    /* Real integration of GET. */
+    if (strpos($uri, '?') !== false) {
         list($uri, $get_var) = explode('?', $uri);
         $exploded_get = explode('&', $get_var);
         
-        if (count($exploded_get))
-        {
-            foreach ($exploded_get as $get)
-            {
+        if (count($exploded_get)) {
+            foreach ($exploded_get as $get) {
                 list($key, $value) = explode('=', $get);
                 $_GET[$key] = $value;
             }
         }
     }
     
-    // remove suffix page if founded
+    /* Remove suffix page if found. */
     if (URL_SUFFIX !== '' and URL_SUFFIX !== '/') {
         $uri = preg_replace('#^(.*)('.URL_SUFFIX.')$#i', "$1", $uri);
     }
     define('CURRENT_URI', trim($uri, '/'));
     
-    // this is where 80% of the things is done 
+    /* This is where 80% of the things are done. */
     $page = find_page_by_uri($uri);
     
-    // if we fund it, display it!
-    if (is_object($page))
-    {
+    /* If we found it, display it! */
+    if (is_object($page)) {
         Observer::notify('page_found', $page);
         $page->_executeLayout();
+    } else {
+         page_not_found();   
     }
-    else page_not_found();
-    
-} // main
+} 
 
-// ok come on! let's go! (movie: Hacker's)
+/* Ok come on! let's go! (movie: Hacker's) */
 main();

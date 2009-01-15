@@ -20,17 +20,18 @@ class PagePart extends Record
     public function beforeSave()
     {
         // apply filter to save is generated result in the database
-        if ( ! empty($this->filter_id))
-            $this->content_html = Filter::get($this->filter_id)->apply($this->content);
-        else
-            $this->content_html = $this->content;
+        if (! empty($this->filter_id)) {
+            $this->content_html = Filter::get($this->filter_id)->apply($this->content);            
+        } else {
+            $this->content_html = $this->content;            
+        }
         
         return true;
     }
     
     public static function findByPageId($id)
     {
-        return self::findAllFrom('PagePart', 'page_id='.(int)$id.' ORDER BY id');
+        return self::findAllFrom('PagePart', 'page_id=' . (int)$id . ' ORDER BY id');
     }
     
     public static function deleteByPageId($id)

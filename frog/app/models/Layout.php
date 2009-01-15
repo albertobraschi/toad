@@ -60,19 +60,15 @@ class Layout extends Record
         $stmt->execute();
         
         // Run!
-        if ($limit == 1)
-        {
+        if ($limit == 1)  {
             return $stmt->fetchObject('Layout');
-        }
-        else
-        {
+        } else {
             $objects = array();
-            while ($object = $stmt->fetchObject('Layout'))
-                $objects[] = $object;
-            
+            while ($object = $stmt->fetchObject('Layout')) {
+                $objects[] = $object;                
+            }
             return $objects;
         }
-    
     }
     
     public static function findAll($args = null)

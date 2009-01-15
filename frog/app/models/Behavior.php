@@ -34,8 +34,9 @@ class Behavior
      */
     public static function remove($behavior_id)
     {
-        if (isset(self::$behaviors[$behavior_id]))
-            unset(self::$behaviors[$behavior_id]);
+        if (isset(self::$behaviors[$behavior_id])) {
+            unset(self::$behaviors[$behavior_id]);            
+        }
     }
     
     /**
@@ -60,21 +61,18 @@ class Behavior
      */
     public static function load($behavior_id, &$page, $params)
     {
-        if ( ! empty(self::$behaviors[$behavior_id]))
-        {
+        if ( ! empty(self::$behaviors[$behavior_id])) {
             $file = CORE_ROOT.'/plugins/'.self::$behaviors[$behavior_id];
             
-            if (isset(self::$loaded_files[$file]))
-                return new $behavior_id($page, $params);
+            if (isset(self::$loaded_files[$file])) {
+                return new $behavior_id($page, $params);                
+            }
             
-            if (file_exists($file))
-            {
+            if (file_exists($file)) {
                 include $file;
                 self::$loaded_files[$file] = true;
                 return new $behavior_id($page, $params);
-            }
-            else
-            {
+            } else {
                 exit ("Behavior $behavior_id not found!");
             }
         }
@@ -91,10 +89,11 @@ class Behavior
     {
         $behavior_page_class = 'Page'.str_replace(' ','',ucwords(str_replace('_',' ', $behavior_id)));
 
-        if (class_exists($behavior_page_class))
-            return $behavior_page_class;
-        else
-            return 'Page';
+        if (class_exists($behavior_page_class)) {
+            return $behavior_page_class;            
+        } else {
+            return 'Page';            
+        }
     }
 
 

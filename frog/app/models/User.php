@@ -22,8 +22,7 @@ class User extends Record
     
     public function getPermissions()
     {
-        if ( !isset($this->id))
-        {
+        if (! isset($this->id)) {
             return array();
         }
         
@@ -34,8 +33,9 @@ class User extends Record
         $stmt = self::$__CONN__->prepare($sql);
         $stmt->execute();
          
-        while ($perm = $stmt->fetchObject())
-            $perms[] = $perm->name;
+        while ($perm = $stmt->fetchObject()) {
+            $perms[] = $perm->name;            
+        }
         
         return $perms;
     }
@@ -85,15 +85,11 @@ class User extends Record
         $stmt->execute();
         
         // Run!
-        if ($limit == 1)
-        {
+        if ($limit == 1) {
             return $stmt->fetchObject('User');
-        }
-        else
-        {
+        } else {
             $objects = array();
-            while ($object = $stmt->fetchObject('User'))
-            {
+            while ($object = $stmt->fetchObject('User')) {
                 $objects[] = $object;
             }
             return $objects;

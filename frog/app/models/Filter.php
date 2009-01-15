@@ -33,8 +33,9 @@ class Filter
      */
     public static function remove($filter_id)
     {
-        if (isset(self::$filters[$filter_id]))
-            unset(self::$filters[$filter_id]);
+        if (isset(self::$filters[$filter_id])) {
+            unset(self::$filters[$filter_id]);            
+        }
     }
     
     /**
@@ -56,23 +57,22 @@ class Filter
      */
     public static function get($filter_id)
     {
-        if ( ! isset(self::$filters_loaded[$filter_id]))
-        {
-            if (isset(self::$filters[$filter_id]))
-            {
+        if ( ! isset(self::$filters_loaded[$filter_id])) {
+            if (isset(self::$filters[$filter_id])) {
                 $file = CORE_ROOT.'/plugins/'.self::$filters[$filter_id];
-                if (file_exists($file))
-                {
+                if (file_exists($file)) {
                     include $file;
                     
                     $filter_class = Inflector::camelize($filter_id);
                     self::$filters_loaded[$filter_id] = new $filter_class();
                     return self::$filters_loaded[$filter_id];
                 }
+            } else {
+                return false;
             }
-            else return false;
+        } else {
+            return self::$filters_loaded[$filter_id];
         }
-        else return self::$filters_loaded[$filter_id];
     }
     
 } // end Filter class

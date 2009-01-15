@@ -26,15 +26,17 @@ class AuthUser
     
     static public function load()
     {
-        if (isset($_SESSION[self::SESSION_KEY]) && isset($_SESSION[self::SESSION_KEY]['username']))
-            $user = User::findBy('username', $_SESSION[self::SESSION_KEY]['username']);
-        else if (isset($_COOKIE[self::COOKIE_KEY]))
-            $user = self::challengeCookie($_COOKIE[self::COOKIE_KEY]);
-        else
-            return false;
+        if (isset($_SESSION[self::SESSION_KEY]) && isset($_SESSION[self::SESSION_KEY]['username'])) {
+            $user = User::findBy('username', $_SESSION[self::SESSION_KEY]['username']);            
+        } else if (isset($_COOKIE[self::COOKIE_KEY])) {
+            $user = self::challengeCookie($_COOKIE[self::COOKIE_KEY]);            
+        } else {
+            return false;            
+        }
         
-        if ( ! $user)
-            return self::logout();
+        if (! $user) {
+            return self::logout();            
+        }
         
         self::setInfos($user);
     }
@@ -85,32 +87,28 @@ class AuthUser
           
         $user = User::findBy('username', $username);
         
-        if ( ! $user instanceof User && self::ALLOW_LOGIN_WITH_EMAIL)
-            $user = User::findBy('email', $username);
+        if (! $user instanceof User && self::ALLOW_LOGIN_WITH_EMAIL) {
+            $user = User::findBy('email', $username);            
+        }
 
-        if ($user instanceof User && $user->password == sha1($password))
-        {
+        if ($user instanceof User && $user->password == sha1($password)) {
             $user->last_login = date('Y-m-d H:i:s');
             $user->save();
             
-            if ($set_cookie)
-            {
+            if ($set_cookie) {
                 $time = $_SERVER['REQUEST_TIME'] + self::COOKIE_LIFE;
                 setcookie(self::COOKIE_KEY, self::bakeUserCookie($time, $user), $time, '/', null, (isset($_ENV['SERVER_PROTOCOL']) && ((strpos($_ENV['SERVER_PROTOCOL'],'https') || strpos($_ENV['SERVER_PROTOCOL'],'HTTPS')))));
             }
             
             self::setInfos($user);
             return true;
-        }
-        else
-        {
-            if (self::DELAY_ON_INVALID_LOGIN)
-            {
-                if ( ! isset($_SESSION[self::SESSION_KEY.'_invalid_logins']))
-                    $_SESSION[self::SESSION_KEY.'_invalid_logins'] = 1;
-                else
-                    ++$_SESSION[self::SESSION_KEY.'_invalid_logins'];
-                
+        } else {
+            if (self::DELAY_ON_INVALID_LOGIN) {
+                if (! isset($_SESSION[self::SESSION_KEY.'_invalid_logins'])) {
+                    $_SESSION[self::SESSION_KEY.'_invalid_logins'] = 1;                    
+                } else {
+                    ++$_SESSION[self::SESSION_KEY.'_invalid_logins'];                    
+                }
                 sleep(max(0, min($_SESSION[self::SESSION_KEY.'_invalid_logins'], (ini_get('max_execution_time') - 1))));
             }
             return false;   
@@ -131,13 +129,14 @@ class AuthUser
     static protected function challengeCookie($cookie)
     {
         $params = self::explodeCookie($cookie);
-        if (isset($params['exp'], $params['id'], $params['digest']))
-        {
-            if ( ! $user = Record::findByIdFrom('User', $params['id']))
-                return false;
+        if (isset($params['exp'], $params['id'], $params['digest'])) {
+            if (! $user = Record::findByIdFrom('User', $params['id'])) {
+                return false;                
+            }
             
-            if (self::bakeUserCookie($params['exp'], $user) == $cookie && $params['exp'] > $_SERVER['REQUEST_TIME'])
-                return $user;
+            if (self::bakeUserCookie($params['exp'], $user) == $cookie && $params['exp'] > $_SERVER['REQUEST_TIME']) {
+                return $user;                
+            }
             
         }
         return false;
@@ -147,11 +146,11 @@ class AuthUser
     {
         $pieces = explode('&', $cookie);
         
-        if (count($pieces) < 2)
-            return array();
+        if (count($pieces) < 2) {
+            return array();            
+        }
         
-        foreach ($pieces as $piece)
-        {
+        foreach ($pieces as $piece) {
             list($key, $value) = explode('=', $piece);
             $params[$key] = $value;
         }

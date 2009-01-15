@@ -12,12 +12,9 @@ class SettingController extends Controller
     function __construct()
     {
         AuthUser::load();
-        if ( ! AuthUser::isLoggedIn())
-        {
+        if (!AuthUser::isLoggedIn()) {
             redirect(get_url('login'));
-        }
-        else if ( ! AuthUser::hasPermission('administrator'))
-        {
+        } else if (!AuthUser::hasPermission('administrator')) {
             Flash::set('error', __('You do not have permission to access the requested page!'));
             redirect(get_url());
         }
@@ -28,8 +25,9 @@ class SettingController extends Controller
     function index()
     {
         // check if trying to save
-        if (get_request_method() == 'POST')
-            return $this->_save();
+        if (get_request_method() == 'POST') {
+            return $this->_save();            
+        }
         
         $this->display('setting/index');
     }
@@ -37,16 +35,13 @@ class SettingController extends Controller
     function _save()
     {
         Setting::saveFromData($_POST['setting']);
-        
         Flash::set('success', __('Settings has been saved!'));
-        
         redirect(get_url('setting'));
     }
     
     function activate_plugin($plugin)
     {
-        if ( ! AuthUser::hasPermission('administrator'))
-        {
+        if (!AuthUser::hasPermission('administrator')) {
             Flash::set('error', __('You do not have permission to access the requested page!'));
             redirect(get_url());
         }
@@ -56,8 +51,7 @@ class SettingController extends Controller
     
     function deactivate_plugin($plugin)
     {
-        if ( ! AuthUser::hasPermission('administrator'))
-        {
+        if (!AuthUser::hasPermission('administrator')) {
             Flash::set('error', __('You do not have permission to access the requested page!'));
             redirect(get_url());
         }

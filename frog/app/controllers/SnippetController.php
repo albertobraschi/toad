@@ -13,12 +13,9 @@ class SnippetController extends Controller
     function __construct()
     {
         AuthUser::load();
-        if ( ! AuthUser::isLoggedIn())
-        {
+        if (!AuthUser::isLoggedIn()) {
             redirect(get_url('login'));
-        }
-        else if ( ! AuthUser::hasPermission('administrator') && ! AuthUser::hasPermission('developer'))
-        {
+        } else if ( ! AuthUser::hasPermission('administrator') && ! AuthUser::hasPermission('developer')) {
             Flash::set('error', __('You do not have permission to access the requested page!'));
             redirect(get_url());
         }
@@ -37,14 +34,16 @@ class SnippetController extends Controller
     function add()
     {
         // check if trying to save
-        if (get_request_method() == 'POST')
-            return $this->_add();
+        if (get_request_method() == 'POST') {
+            return $this->_add();            
+        }
         
         // check if user have already enter something
         $snippet = Flash::get('post_data');
         
-        if (empty($snippet))
-            $snippet = new Snippet;
+        if (empty($snippet)) {
+            $snippet = new Snippet;            
+        }
         
         $this->display('snippet/edit', array(
             'action'  => 'add',
@@ -60,35 +59,33 @@ class SnippetController extends Controller
         
         $snippet = new Snippet($data);
         
-        if ( ! $snippet->save())
-        {
+        if (!$snippet->save()) {
             Flash::set('error', __('Snippet has not been added. Name must be unique!'));
             redirect(get_url('snippet', 'add'));
-        } 
-        else 
-        {
+        } else {
             Flash::set('success', __('Snippet has been added!'));
             Observer::notify('snippet_after_add', $snippet);
         }
         
         // save and quit or save and continue editing?
-        if (isset($_POST['commit']))
-            redirect(get_url('snippet'));
-        else
-            redirect(get_url('snippet/edit/'.$snippet->id));
+        if (isset($_POST['commit'])) {
+            redirect(get_url('snippet'));            
+        } else {
+            redirect(get_url('snippet/edit/'.$snippet->id));            
+        }
     }
     
     function edit($id)
     {
-        if ( ! $snippet = Snippet::findById($id))
-        {
+        if (!$snippet = Snippet::findById($id)) {
             Flash::set('error', __('Snippet not found!'));
             redirect(get_url('snippet'));
         }
         
         // check if trying to save
-        if (get_request_method() == 'POST')
-            return $this->_edit($id);
+        if (get_request_method() == 'POST') {
+            return $this->_edit($id);            
+        }
         
         $this->display('snippet/edit', array(
             'action'  => 'edit',
@@ -105,39 +102,35 @@ class SnippetController extends Controller
         
         $snippet = new Snippet($data);
         
-        if ( ! $snippet->save())
-        {
+        if (!$snippet->save()) {
             Flash::set('error', __('Snippet :name has not been saved. Name must be unique!', array(':name'=>$snippet->name)));
             redirect(get_url('snippet/edit/'.$id));
-        }
-        else
-        {
+        } else {
             Flash::set('success', __('Snippet :name has been saved!', array(':name'=>$snippet->name)));
             Observer::notify('snippet_after_edit', $snippet);
         }
         
         // save and quit or save and continue editing?
-        if (isset($_POST['commit']))
-            redirect(get_url('snippet'));
-        else
-            redirect(get_url('snippet/edit/'.$id));
+        if (isset($_POST['commit'])) {
+            redirect(get_url('snippet'));            
+        } else {
+            redirect(get_url('snippet/edit/'.$id));            
+        }
     }
     
     function delete($id)
     {
         // find the user to delete
-        if ($snippet = Record::findByIdFrom('Snippet', $id))
-        {
+        if ($snippet = Record::findByIdFrom('Snippet', $id)) {
             if ($snippet->delete()) {
                 Flash::set('success', __('Snippet :name has been deleted!', array(':name'=>$snippet->name)));     
                 Observer::notify('snippet_after_delete', $snippet);
             } else {
-                Flash::set('error', __('Snippet :name has not been deleted!', array(':name'=>$snippet->name)));
-                                
+                Flash::set('error', __('Snippet :name has not been deleted!', array(':name'=>$snippet->name)));             
             }
+        } else {
+            Flash::set('error', __('Snippet not found!'));
         }
-        else Flash::set('error', __('Snippet not found!'));
-        
         redirect(get_url('snippet'));
     }
     
@@ -145,8 +138,7 @@ class SnippetController extends Controller
     {
         parse_str($_POST['data']);
         
-        foreach ($snippets as $position => $snippet_id)
-        {
+        foreach ($snippets as $position => $snippet_id) {
             $snippet = Record::findByIdFrom('Snippet', $snippet_id);
             $snippet->position = (int) $position + 1;
             $snippet->save();

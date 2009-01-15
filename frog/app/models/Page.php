@@ -56,13 +56,10 @@ class Page extends Record
         $this->created_on = $this->created_on . ' ' . $this->created_on_time;
         unset($this->created_on_time);
         
-        if ( ! empty($this->published_on))
-        {
+        if (! empty($this->published_on)) {
             $this->published_on = $this->published_on . ' ' . $this->published_on_time;
             unset($this->published_on_time);
-        }
-        else if ($this->status_id == Page::STATUS_PUBLISHED)
-        {
+        } else if ($this->status_id == Page::STATUS_PUBLISHED) {
             $this->published_on = date('Y-m-d H:i:s');
         }
         
@@ -80,35 +77,38 @@ class Page extends Record
         $sql = "SELECT tag.id AS id, tag.name AS tag FROM $tablename_page_tag AS page_tag, $tablename_tag AS tag ".
                "WHERE page_tag.page_id={$this->id} AND page_tag.tag_id = tag.id";
         
-        if ( ! $stmt = self::$__CONN__->prepare($sql))
-            return array();
+        if (! $stmt = self::$__CONN__->prepare($sql)) {
+            return array();            
+        }
             
         $stmt->execute();
         
         // Run!
         $tags = array();
-        while ($object = $stmt->fetchObject())
-             $tags[$object->id] = $object->tag;
+        while ($object = $stmt->fetchObject()) {
+            $tags[$object->id] = $object->tag;            
+        }
         
         return $tags;
     }
     
     public function saveTags($tags)
     {
-        if (is_string($tags))
-            $tags = explode(',', $tags);
+        if (is_string($tags)) {
+            $tags = explode(',', $tags);            
+        }
         
         $tags = array_map('trim', $tags);
         
         $current_tags = $this->getTags();
         
         // no tag before! no tag now! ... nothing to do!
-        if (count($tags) == 0 && count($current_tags) == 0)
-            return;
+        if (count($tags) == 0 && count($current_tags) == 0) {
+            return;            
+        }
         
         // delete all tags
-        if (count($tags) == 0)
-        {
+        if (count($tags) == 0) {
             $tablename = self::tableNameFromClassName('Tag');
             
             // update count (-1) of those tags
@@ -116,20 +116,17 @@ class Page extends Record
                 self::$__CONN__->exec("UPDATE $tablename SET count = count - 1 WHERE name = '$tag'");
             
             return Record::deleteWhere('PageTag', 'page_id=?', array($this->id));
-        }
-        else
-        {
+        } else {
             $old_tags = array_diff($current_tags, $tags);
             $new_tags = array_diff($tags, $current_tags);
             
             // insert all tags in the tag table and then populate the page_tag table
-            foreach ($new_tags as $index => $tag_name)
-            {
-                if ( ! empty($tag_name))
-                {
+            foreach ($new_tags as $index => $tag_name) {
+                if (! empty($tag_name)) {
                     // try to get it from tag list, if not we add it to the list
-                    if ( ! $tag = Record::findOneFrom('Tag', 'name=?', array($tag_name)))
-                        $tag = new Tag(array('name' => trim($tag_name)));
+                    if (! $tag = Record::findOneFrom('Tag', 'name=?', array($tag_name))) {
+                        $tag = new Tag(array('name' => trim($tag_name)));                        
+                    }
                     
                     $tag->count++;
                     $tag->save();
@@ -141,8 +138,7 @@ class Page extends Record
             }
             
             // remove all old tag
-            foreach ($old_tags as $index => $tag_name)
-            {
+            foreach ($old_tags as $index => $tag_name) {
                 // get the id of the tag
                 $tag = Record::findOneFrom('Tag', 'name=?', array($tag_name));
                 Record::deleteWhere('PageTag', 'page_id=? AND tag_id=?', array($this->id, $tag->id));
@@ -152,8 +148,9 @@ class Page extends Record
         }
     }
     
-    public static function find($args = null)
-    {
+    /* TODO: All the SQL should be handled by the (Active) Record class. */
+     public static function find($args = null) 
+     {
         
         // Collect attributes...
         $where    = isset($args['where']) ? trim($args['where']) : '';
@@ -179,15 +176,13 @@ class Page extends Record
         $stmt->execute();
         
         // Run!
-        if ($limit == 1)
-        {
+        if ($limit == 1) {
             return $stmt->fetchObject('Page');
-        }
-        else
-        {
+        } else {
             $objects = array();
-            while ($object = $stmt->fetchObject('Page'))
-                $objects[] = $object;
+            while ($object = $stmt->fetchObject('Page')) {
+                $objects[] = $object;                
+            }
             
             return $objects;
         }

@@ -22,15 +22,14 @@ class Plugin
 	static function init()
 	{
 		self::$plugins = unserialize(Setting::get('plugins'));
-		foreach (self::$plugins as $plugin_id => $tmp)
-		{
+		foreach (self::$plugins as $plugin_id => $tmp) {
 			$file = CORE_ROOT.'/plugins/'.$plugin_id.'/index.php';
-			if (file_exists($file))
-				include $file;
+			if (file_exists($file)) {
+				include $file;			    
+			}
 			
 			$file = CORE_ROOT.'/plugins/'.$plugin_id.'/i18n/'.I18n::getLocale().'-message.php';
-			if (file_exists($file))
-			{
+			if (file_exists($file)) {
 				$array = include $file;
 				I18n::add($array);
 			}
@@ -59,8 +58,9 @@ class Plugin
 		self::save();
 
 		$file = CORE_ROOT.'/plugins/'.$plugin_id.'/enable.php';
-		if (file_exists($file))
-			include $file;
+		if (file_exists($file)) {
+			include $file;		    
+		}
 	}
 	
 	/**
@@ -70,14 +70,14 @@ class Plugin
 	 */
 	static function deactivate($plugin_id)
 	{
-		if (isset(self::$plugins[$plugin_id]))
-		{
+		if (isset(self::$plugins[$plugin_id])) {
 			unset(self::$plugins[$plugin_id]);
 			self::save();
 
 			$file = CORE_ROOT.'/plugins/'.$plugin_id.'/disable.php';
-			if (file_exists($file))
-				include $file;
+			if (file_exists($file)) {
+				include $file;			    
+			}
 		}
 	}
 
@@ -98,15 +98,13 @@ class Plugin
 	{
 		$dir = CORE_ROOT.'/plugins/';
 
-		if ($handle = opendir($dir))
-		{
-			while (false !== ($plugin_id = readdir($handle)))
-			{
-				if ( ! isset(self::$plugins[$plugin_id]) && is_dir($dir.$plugin_id) && strpos($plugin_id, '.') !== 0)
-				{
+		if ($handle = opendir($dir)) {
+			while (false !== ($plugin_id = readdir($handle))) {
+				if (! isset(self::$plugins[$plugin_id]) && is_dir($dir.$plugin_id) && strpos($plugin_id, '.') !== 0) {
 					$file = CORE_ROOT.'/plugins/'.$plugin_id.'/index.php';
-					if (file_exists($file))
-						include $file;
+					if (file_exists($file)) {
+						include $file;					    
+					}
 				}
 			}
 			closedir($handle);

@@ -38,12 +38,9 @@ class Snippet extends Record
     public function beforeSave()
     {
         // apply filter to save is generated result in the database
-        if ( ! empty($this->filter_id))
-        {
+        if (! empty($this->filter_id)) {
             $this->content_html = Filter::get($this->filter_id)->apply($this->content);
-        }
-        else
-        {
+        } else {
             $this->content_html = $this->content;
         }
         return true;
@@ -76,15 +73,11 @@ class Snippet extends Record
         $stmt->execute();
 
         // Run!
-        if ($limit == 1)
-        {
+        if ($limit == 1) {
             return $stmt->fetchObject('Snippet');
-        }
-        else
-        {
+        } else {
             $objects = array();
-            while ($object = $stmt->fetchObject('Snippet'))
-            {
+            while ($object = $stmt->fetchObject('Snippet')) {
                 $objects[] = $object;
             }
             return $objects;

@@ -23,8 +23,7 @@ class UserPermission extends Record
         self::$__CONN__->exec($sql);
         
         // add the new perms
-        foreach ($perms as $perm_name => $perm_id)
-        {
+        foreach ($perms as $perm_name => $perm_id) {
             $sql = 'INSERT INTO '.$tablename.' (user_id, permission_id) VALUES ('.(int)$user_id.','.(int)$perm_id.')';
             self::$__CONN__->exec($sql);
         }
