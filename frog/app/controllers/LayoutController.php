@@ -144,4 +144,4 @@ class LayoutController extends Controller
         }
     }
 
-} // end LayoutController class
+}

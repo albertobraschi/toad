@@ -1,7 +1,8 @@
 <?php
 
 /* TODO: Get rid of this class. */
-require APP_PATH . '/classes/Page.php';
+#require APP_PATH . '/classes/Page.php';
+//require APP_PATH . '/models/Page.php';
 
 if (!defined('HELPER_PATH')) define('HELPER_PATH', CORE_ROOT . '/helpers');
 if (!defined('URL_SUFFIX'))  define('URL_SUFFIX',  '');
@@ -32,25 +33,22 @@ function explode_uri($uri)
 /* TODO: This should be part of Page model. */
 function find_page_by_uri($uri) 
 {
+/*
     global $__FROG_CONN__;
     
     $uri = trim($uri, '/');
     
     $has_behavior = false;
     
-    /* Adding the home root. */
     $urls = array_merge(array(''), explode_uri($uri));
     $url = '';
- 
-    $page = new stdClass;
-    $page->id = 0;
-    
-    $parent = false;
+    $parent = new Page;
+    $parent->id(0);
     
     foreach ($urls as $page_slug) {
         $url = ltrim($url . '/' . $page_slug, '/');
-        
-        if ($page = find_page_by_slug($page_slug, $parent)) {
+        //if ($page = find_page_by_slug($page_slug, $parent)) {
+        if ($page = Page::findBySlugAndParentId($page_slug, $parent->id())) {
             // check for behavior
             if ($page->behavior_id != '') {
                 // add a instance of the behavior with the name of the behavior 
@@ -67,9 +65,11 @@ function find_page_by_uri($uri)
     } 
     
     return (!$page && $has_behavior) ? $parent: $page;
+    */
 } 
 
 /* TODO: This should be part of Page model. */
+/*
 function find_page_by_slug($slug, &$parent)
 {
     global $__FROG_CONN__;
@@ -106,6 +106,7 @@ function find_page_by_slug($slug, &$parent)
         return false;
     }
 }
+*/
 
 function get_parts($page_id)
 {
@@ -186,12 +187,12 @@ function main()
     define('CURRENT_URI', trim($uri, '/'));
     
     /* This is where 80% of the things are done. */
-    $page = find_page_by_uri($uri);
+    $page = Page::findByUri($uri);
     
     /* If we found it, display it! */
     if (is_object($page)) {
         Observer::notify('page_found', $page);
-        $page->_executeLayout();
+        $page->show();
     } else {
          page_not_found();   
     }

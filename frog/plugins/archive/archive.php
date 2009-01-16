@@ -6,7 +6,7 @@ class Archive
     {
         $this->page =& $page;
         $this->params = $params;
-        
+
         switch(count($params))
         {
             case 0: break;
@@ -61,7 +61,7 @@ class Archive
     
     private function _displayPage($slug)
     {
-        if ( ! $this->page = find_page_by_slug($slug, $this->page))
+        if ( ! $this->page = Page::findBySlugAndParentId($slug, $this->page->id()))
             page_not_found();
     }
     
@@ -132,9 +132,10 @@ class Archive
 
 class PageArchive extends Page
 {
-    protected function setUrl()
+    //    protected function setUrl()
+    public function url()
     {
-        $this->url = trim($this->parent->url . date('/Y/m/d/', strtotime($this->created_on)). $this->slug, '/');
+        return trim($this->parent->url() . date('/Y/m/d/', strtotime($this->created_on)). $this->slug, '/');
     }
     
     public function title() { return isset($this->time) ? strftime($this->title, $this->time): $this->title; }

@@ -21,7 +21,6 @@ class Page extends Record
     public $breadcrumb;
     public $keywords;
     public $description;
-    public $content;
     public $parent_id;
     public $layout_id;
     public $behavior_id;
@@ -36,8 +35,13 @@ class Page extends Record
     public $position;
     public $is_protected;
     
-    /* Stuff from Page class */
-    /* Stuff from Page class ends */
+    /* Methods for Record class. */
+    
+    public function columns() {
+        return array('title', 'slug', 'breadcrumb', 'keywords', 'description', 'parent_id', 'layout_id', 
+                     'behavior_id', 'status_id', 'comment_status', 'created_on', 'published_on', 'updated_on', 
+                     'created_by_id', 'updated_by_id', 'position', 'is_protected', 'id');
+    }
     
     public function beforeInsert()
     {
@@ -56,12 +60,16 @@ class Page extends Record
     
     public function beforeUpdate()
     {
+        /* TODO: Figure out logic behind xxx_on_time variables
         $this->created_on = $this->created_on . ' ' . $this->created_on_time;
         unset($this->created_on_time);
+        */
         
         if (! empty($this->published_on)) {
+            /*
             $this->published_on = $this->published_on . ' ' . $this->published_on_time;
             unset($this->published_on_time);
+            */
         } else if ($this->status_id == Page::STATUS_PUBLISHED) {
             $this->published_on = date('Y-m-d H:i:s');
         }
@@ -71,28 +79,12 @@ class Page extends Record
         
         return true;
     }
-    
-    public function getTags()
+
+    /* Tag related methods. */
+
+    public function tags()
     {
-        $tablename_page_tag = self::tableNameFromClassName('PageTag');
-        $tablename_tag = self::tableNameFromClassName('Tag');
-        
-        $sql = "SELECT tag.id AS id, tag.name AS tag FROM $tablename_page_tag AS page_tag, $tablename_tag AS tag ".
-               "WHERE page_tag.page_id={$this->id} AND page_tag.tag_id = tag.id";
-        
-        if (! $stmt = self::$__CONN__->prepare($sql)) {
-            return array();            
-        }
-            
-        $stmt->execute();
-        
-        // Run!
-        $tags = array();
-        while ($object = $stmt->fetchObject()) {
-            $tags[$object->id] = $object->tag;            
-        }
-        
-        return $tags;
+        return Tag::findByPageId($this->id());
     }
     
     public function saveTags($tags)
@@ -102,22 +94,19 @@ class Page extends Record
         }
         
         $tags = array_map('trim', $tags);
+        $tags = array_filter($tags);
         
-        $current_tags = $this->getTags();
+        $current_tags = array();
+        foreach($this->tags() as $tag) {
+            $current_tags[] = $tag->name();            
+        }
         
         // no tag before! no tag now! ... nothing to do!
         if (count($tags) == 0 && count($current_tags) == 0) {
             return;            
         }
-        
         // delete all tags
         if (count($tags) == 0) {
-            $tablename = self::tableNameFromClassName('Tag');
-            
-            // update count (-1) of those tags
-            foreach($current_tags as $tag)
-                self::$__CONN__->exec("UPDATE $tablename SET count = count - 1 WHERE name = '$tag'");
-            
             return Record::deleteWhere('PageTag', 'page_id=?', array($this->id));
         } else {
             $old_tags = array_diff($current_tags, $tags);
@@ -127,11 +116,10 @@ class Page extends Record
             foreach ($new_tags as $index => $tag_name) {
                 if (! empty($tag_name)) {
                     // try to get it from tag list, if not we add it to the list
-                    if (! $tag = Record::findOneFrom('Tag', 'name=?', array($tag_name))) {
+                    if (! $tag = Tag::findByName($tag_name)) {
                         $tag = new Tag(array('name' => trim($tag_name)));                        
                     }
                     
-                    $tag->count++;
                     $tag->save();
                     
                     // create the relation between the page and the tag
@@ -143,70 +131,112 @@ class Page extends Record
             // remove all old tag
             foreach ($old_tags as $index => $tag_name) {
                 // get the id of the tag
-                $tag = Record::findOneFrom('Tag', 'name=?', array($tag_name));
+                $tag = Tag::findByName($tag_name);
                 Record::deleteWhere('PageTag', 'page_id=? AND tag_id=?', array($this->id, $tag->id));
-                $tag->count--;
                 $tag->save();
             }
         }
     }
     
-    /* TODO: All the SQL should be handled by the (Active) Record class. */
-     public static function find($args = null) 
-     {
-        
-        // Collect attributes...
-        $where    = isset($args['where']) ? trim($args['where']) : '';
-        $order_by = isset($args['order']) ? trim($args['order']) : '';
-        $offset   = isset($args['offset']) ? (int) $args['offset'] : 0;
-        $limit    = isset($args['limit']) ? (int) $args['limit'] : 0;
-        
-        // Prepare query parts
-        $where_string = empty($where) ? '' : "WHERE $where";
-        $order_by_string = empty($order_by) ? '' : "ORDER BY $order_by";
-        $limit_string = $limit > 0 ? "LIMIT $offset, $limit" : '';
-        
-        $tablename = self::tableNameFromClassName('Page');
-        $tablename_user = self::tableNameFromClassName('User');
-        
-        // Prepare SQL
-        $sql = "SELECT page.*, author.name AS created_by_name, updator.name AS updated_by_name FROM $tablename AS page".
-               " LEFT JOIN $tablename_user AS author ON page.created_by_id = author.id".
-               " LEFT JOIN $tablename_user AS updator ON page.updated_by_id = updator.id".
-               " $where_string $order_by_string $limit_string";
-        
-        $stmt = self::$__CONN__->prepare($sql);
-        $stmt->execute();
-        
-        // Run!
-        if ($limit == 1) {
-            return $stmt->fetchObject('Page');
+    
+    public function updater() {
+        return User::findById($this->updatedById());
+    }
+
+    public function creator() {
+        return User::findById($this->createdById());
+    }
+    
+    public function author() {
+        return $this->creator();
+    }
+    
+    public function parent() {
+        return Page::findById($this->parentId());
+    }
+    
+    public function children($params=array(), $include_hidden = false) {
+        if ($include_hidden) {
+            $params['where'] = sprintf("parent_id=%d AND status_id>=%d", 
+                                        $this->id(), Page::STATUS_PUBLISHED);                        
         } else {
-            $objects = array();
-            while ($object = $stmt->fetchObject('Page')) {
-                $objects[] = $object;                
-            }
-            
-            return $objects;
+            $params['where'] = sprintf("parent_id=%d AND status_id<%d", 
+                                        $this->id(), Page::STATUS_HIDDEN);                        
+        }
+        
+        return Page::find($params);
+    }
+    
+    public function parts($name=null) {
+        if ($name) {
+            return PagePart::findByNameAndPageId($name, $this->id());                        
+        } else {
+            return PagePart::findByPageId($this->id());            
         }
     }
     
-    public static function findAll($args = null)
+    public function layout() {
+        if ($this->layoutId()) {
+            return Layout::findById($this->layoutId());            
+        } else {
+            return $this->parent()->layout();
+        }
+    }
+        
+    public function includeSnippet($name)
     {
-        return self::find($args);
+        if ($snippet = Snippet::findByName($name)) {
+            eval('?>' . $snippet->contentHtml());
+        }
     }
     
-    public static function findById($id)
-    {
-        return self::find(array(
-            'where' => 'page.id='.(int)$id,
-            'limit' => 1
-        ));
+    public function url() {        
+        if ($this->parent()) {
+            return trim($this->parent()->url() . '/'. $this->slug(), '/') . URL_SUFFIX;            
+        } else {
+            return BASE_URL . trim('/'. $this->slug(), '/');            
+        }
     }
     
+    public function link($label=null, $options='')
+    {
+        if ($label == null) {
+            $label = $this->title();            
+        }
+
+        return sprintf('<a href="%s" title="%s" %s>%s</a>',
+            $this->url(),
+            $this->title(),
+            $options,
+            $label
+            );
+    }
+
+
+    /* TODO: This should have inherit. */
+    public function hasContent($part) { 
+        return $this->parts($part);
+    }
+
+    
+    public function content($part='body', $inherit=false)
+    {
+        // if part exist we generate the content en execute it!
+        if ($this->parts($part)) {
+            ob_start();
+            print $part;
+            eval('?>' . $this->parts($part)->contentHtml());
+            $out = ob_get_contents();
+            ob_end_clean();
+            return $out;
+        } else if ($inherit && $this->parent()) {
+            return $this->parent()->content($part, true);
+        }
+    }
+
     public static function childrenOf($id)
     {
-        return self::find(array('where' => 'parent_id='.$id, 'order' => 'position, page.created_on DESC'));
+        return self::find(array('where' => 'parent_id='.$id, 'order' => 'position, created_on DESC'));
     }
     
     public static function hasChildren($id)
@@ -250,5 +280,127 @@ class Page extends Record
         
         return $new_root_id;
     }
+        
+    /* We need these before PHP 5.3. Older do not have late static binding. */
+    static function find($params=null, $class=__CLASS__) {
+        /* Assume we should call Record finder. */
+        if (is_array($params)) {
+            return parent::find($params, $class);            
+        } else {
+        /* Maintain BC. Assume string mean find by URI. */    
+            return Page::findByUri($params);
+        }
+    }
+
+    static function findById($id, $class=__CLASS__) {
+        return parent::findById($id, $class);
+    }
     
-} // end Page class
+    static function count($params=null, $class=__CLASS__) {
+        return parent::count($params, $class);
+    }
+    
+    /* These are just a helper finders. */
+    
+    /* TODO: This should return an array not just one.*/
+    public static function findBigSister($id, $class=__CLASS__) {
+        $params['where'] = sprintf('parent_id=%d', $id);
+        $params['order'] = 'id DESC';
+        $sql = Record::buildSql($params, $class);
+        return self::connection()->query($sql, PDO::FETCH_CLASS, $class)->fetch();
+    }
+
+    public static function findByParentId($id, $class=__CLASS__) {
+        $params['where'] = sprintf('parent_id=%d', $id);
+        return parent::find($params, $class);            
+    }
+
+    public static function findByUri($uri, $class=__CLASS__) {
+
+        $uri = trim($uri, '/');
+
+        $has_behavior = false;
+
+        $urls = array_merge(array(''), explode_uri($uri));
+        $url = '';
+        $parent = new Page;
+        $parent->id(0);
+
+
+        foreach ($urls as $page_slug) {
+            $url = ltrim($url . '/' . $page_slug, '/');
+            if ($page = Page::findBySlugAndParentId($page_slug, $parent->id())) {
+                if ($page->behaviorId()) {
+                    // add a instance of the behavior with the name of the behavior 
+                    $params = explode_uri(substr($uri, strlen($url)));
+                    $page->{$page->behavior_id} = Behavior::load($page->behavior_id, $page, $params);
+                    return $page;
+                }
+            } else {
+                break;
+            }
+            $parent = $page;  
+        } 
+        return (!$page && $has_behavior) ? $parent: $page;
+    }
+
+    public static function findBySlugAndParentId($slug, $parent_id=0, $class=__CLASS__) {
+        /* TODO: Behaviour pagehack seems kludgish. */
+        $parent = Page::findById($parent_id);
+        if ($parent && $parent->behaviorId()) {
+            $class = Behavior::loadPageHack($parent->behaviorId());
+        }
+        
+        $params['where'] = sprintf("slug=%s AND parent_id=%d", self::connection()->quote($slug), $parent_id);
+        $sql = Record::buildSql($params, $class);
+        return self::connection()->query($sql, PDO::FETCH_CLASS, $class)->fetch();
+    }
+    
+    
+    public function show() {
+        if ($this->layout()) {
+            header('Content-Type: '. $this->layout()->contentType() . '; charset=UTF-8');
+            eval('?>' . $this->layout()->content());
+        }
+    }
+    
+    
+    /* TODO: Everything below here is just copy / paste. */
+    
+    public function date($format='%a, %e %b %Y', $which_one='created')
+    {
+        if ($which_one == 'update' || $which_one == 'updated')
+            return strftime($format, strtotime($this->updated_on));
+        else if ($which_one == 'publish' || $which_one == 'published')
+            return strftime($format, strtotime($this->published_on));
+        else
+            return strftime($format, strtotime($this->created_on));
+    }
+
+    public function breadcrumbs($separator='&gt;')
+    {
+        $url = '';
+        $path = '';
+        $paths = explode('/', '/'.$this->slug);
+        $nb_path = count($paths);
+
+        $out = '<div class="breadcrumb">'."\n";
+
+        if ($this->parent)
+            $out .= $this->parent->_inversedBreadcrumbs($separator);
+
+        return $out . '<span class="breadcrumb-current">'.$this->breadcrumb().'</span></div>'."\n";
+
+    }
+
+    private function _inversedBreadcrumbs($separator)
+    {
+        $out = '<a href="'.$this->url().'" title="'.$this->breadcrumb.'">'.$this->breadcrumb.'</a> <span class="breadcrumb-separator">'.$separator.'</span> '."\n";
+
+        if ($this->parent)
+            return $this->parent->_inversedBreadcrumbs($separator) . $out;
+
+        return $out;
+    }
+
+}

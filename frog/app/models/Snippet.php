@@ -58,6 +58,13 @@ class Snippet extends Record
     static function count($params=null, $class=__CLASS__) {
         return parent::count($params, $class);
     }
+    
+    /* Helper finders. */
+    public static function findByName($name, $class=__CLASS__) {
+        $params['where'] = sprintf("name='%s'", $name);
+        $sql = Record::buildSql($params, $class);
+        return self::connection()->query($sql, PDO::FETCH_CLASS, $class)->fetch();
+    }
 
 } 
 

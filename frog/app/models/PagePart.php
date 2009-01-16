@@ -29,14 +29,33 @@ class PagePart extends Record
         return true;
     }
     
-    public static function findByPageId($id)
-    {
-        return self::findAllFrom('PagePart', 'page_id=' . (int)$id . ' ORDER BY id');
-    }
-    
+    /* TODO: Get rid of PagePart::deleteByPageId() method */
     public static function deleteByPageId($id)
     {
         return self::$__CONN__->exec('DELETE FROM '.self::tableNameFromClassName('PagePart').' WHERE page_id='.(int)$id) === false ? false: true;
     }
 
-} // end PagePart class
+    /* We need these before PHP 5.3. Older do not have late static binding. */
+    static function find($params=null, $class=__CLASS__) {
+        return parent::find($params, $class);            
+    }
+
+    static function findById($id, $class=__CLASS__) {
+        return parent::findById($id, $class);
+    }
+    
+    static function count($params=null, $class=__CLASS__) {
+        return parent::count($params, $class);
+    }
+
+    public static function findByPageId($id, $class=__CLASS__) {
+        $params['where'] = sprintf('page_id=%d', $id);
+        return parent::find($params, $class);            
+    }
+    
+    public static function findByNameAndPageId($name, $id, $class=__CLASS__) {
+        $params['where'] = sprintf("name='%s' AND page_id=%d", $name, $id);
+        $sql = Record::buildSql($params, $class);
+        return self::connection()->query($sql, PDO::FETCH_CLASS, $class)->fetch();
+    }
+} 

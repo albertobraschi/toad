@@ -239,6 +239,8 @@ class Overload {
             } else {
                 $retval = $this->$property;
             };
+        } else {
+            trigger_error("Overloaded call to undefined method $method", E_USER_ERROR);
         }
         
         return($retval);  
@@ -346,7 +348,7 @@ class Record extends Overload
             return self::$__CONN__;            
         }
     }
-
+ 
     /* TODO: For BC. Remove later. */
     final public static function getConnection()
     {
@@ -394,6 +396,12 @@ class Record extends Overload
         }
     }
     
+    /* TODO: This is a kludge. */
+    static public function tableize($class)
+    {
+        return Record::tableNameFromClassName($class);
+    }
+    
     public function table() {
         /* Constant TABLE defined in model overrides the default table name. */
         if (defined(get_class($this) . '::TABLE_NAME')) {
@@ -439,7 +447,6 @@ class Record extends Overload
 
          if (! $this->id()) {
              if (! $this->beforeInsert()) return false;
-                     
              /* Escape values. */
              foreach ($this->columns() as $column) {
                  if (isset($this->$column)) {
@@ -475,7 +482,7 @@ class Record extends Overload
          
              /* Force retval to be boolean. */
              $retval = self::connection()->exec($sql) !== false;
-         
+
              if (!$this->afterUpdate()) return false;
          }
      
@@ -637,16 +644,22 @@ class Record extends Overload
         return self::connection()->query($sql, PDO::FETCH_CLASS, $class)->fetch();
     }
     
-    public static function find($params=null, $class=__CLASS__) {                                                             
-        $sql = Record::buildSql($params, $class);
+    public static function find($params=null, $class=__CLASS__) {
         $retval = array();
+        $sql = Record::buildSql($params, $class);
         foreach (self::connection()->query($sql, PDO::FETCH_CLASS, $class) as $object) {
             $retval[] = $object;
         }
+
         return $retval;
     }
     
-    private static function buildSql($params, $class) {
+    protected static function buildSql($params, $class) {
+        
+        if (isset($params['sql'])) {
+            return $params['sql'];
+        }
+        
         $dummy  = new $class;        
         $table  = $dummy->table();
 
@@ -679,7 +692,7 @@ class Record extends Overload
                   $count = $temp[0];
                 }
             }
-            $sql .= "LIMIT $from, $count ";
+            $sql .= " LIMIT $from, $count ";
         }
         return $sql;
     }    

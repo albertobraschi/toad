@@ -21,12 +21,12 @@ class PageController extends Controller
     {
         $this->setLayout('backend');
         $this->display('page/index', array(
-            'root' => Record::findByIdFrom('Page', 1),
+            'root' => Page::findById(1),
             'content_children' => $this->children(1, 0, true)
         ));
     }
     
-    public function add($parent_id=1)
+    public function add($parent_id = 1)
     {
         // check if trying to save
         if (get_request_method() == 'POST') {
@@ -42,7 +42,7 @@ class PageController extends Controller
         
         if (empty($page_parts)) {
             // check if we have a big sister ...
-            $big_sister = Record::findOneFrom('Page', 'parent_id=? ORDER BY id DESC', array($parent_id));
+            $big_sister = Page::findBigSister($parent_id);
             if ($big_sister) {
                 // get all is part and create the same for the new little sister
                 $big_sister_parts = Record::findAllFrom('PagePart', 'page_id=? ORDER BY id', array($big_sister->id));
@@ -67,7 +67,7 @@ class PageController extends Controller
             'filters'    => Filter::findAll(),
             'behaviors'  => Behavior::findAll(),
             'page_parts' => $page_parts,
-            'layouts'    => Record::findAllFrom('Layout'))
+            'layouts'    => Layout::find())
         );
     }
     
@@ -159,24 +159,30 @@ class PageController extends Controller
             $page_parts = array(new PagePart);            
         }
         
+        $tag_array = array();
+        foreach ($page->tags() as $tag) {
+            $tag_array[] = $tag->name();
+        }
+        
+        
         // display things ...
         $this->setLayout('backend');
         $this->display('page/edit', array(
             'action'     => 'edit',
             'page'       => $page,
-            'tags'       => $page->getTags(),
+            'tags'       => $tag_array,
             'filters'    => Filter::findAll(),
             'behaviors'  => Behavior::findAll(),
             'page_parts' => $page_parts,
-            'layouts'    => Record::findAllFrom('Layout', '1=1 ORDER BY position'))
+            'layouts'    => Layout::find(array('order' => 'position')))
         );
     }
     
     private function _edit($id)
-    {
+    {        
         $data = $_POST['page'];
         
-        $page = Record::findByIdFrom('Page', $id);
+        $page = Page::findById($id);
         
         // need to do this because the use of a checkbox
         $data['is_protected'] = !empty($data['is_protected']) ? 1: 0;
@@ -242,7 +248,7 @@ class PageController extends Controller
             redirect(get_url('page/edit/'.$id));            
         }
     }
-    
+    /*XXXX*/
     public function publish($id)
     {
         if ($id > 1) {

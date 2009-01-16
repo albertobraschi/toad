@@ -10,4 +10,6 @@
 class PageTag extends Record
 {
     const TABLE_NAME = 'page_tag';
+    public $page_id;
+    public $tag_id;
 }

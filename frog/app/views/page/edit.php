@@ -1,6 +1,6 @@
 <h1><?php echo __(ucfirst($action).' Page'); ?></h1>
 
-<form action="<?php if ($action == 'add') echo get_url('page/add'); else echo  get_url('page/edit/'.$page->id); ?>" method="post">
+<form action="<?php if ($action == 'add') echo get_url('page/add'); else echo  get_url('page/edit/'. $page->id()); ?>" method="post">
 
   <input id="page_parent_id" name="page[parent_id]" type="hidden" value="<?php echo $page->parent_id; ?>" />
   <div class="form-area">
@@ -123,7 +123,7 @@
 <?php endif; ?>
     <p><small>
 <?php if (isset($page->updated_on)): ?>
-    <?php echo __('Last updated by'); ?> <?php echo $page->updated_by_name; ?> <?php echo __('on'); ?> <?php echo date('D, j M Y', strtotime($page->updated_on)); ?>
+    <?php echo __('Last updated by'); ?> <?php echo $page->updater()->name(); ?> <?php echo __('on'); ?> <?php echo date('D, j M Y', strtotime($page->updated_on)); ?>
 <?php endif; ?>
     &nbsp;
     </small></p>

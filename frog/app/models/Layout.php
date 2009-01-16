@@ -12,7 +12,7 @@ class Layout extends Record
     const TABLE_NAME = 'layout';
     
     public $name;
-    public $content_type;
+    public $content_type = 'text/html';
     public $content;
     
     public $created_on;
@@ -47,7 +47,7 @@ class Layout extends Record
         /* TODO: This should use Page::count() */
         return Record::countFrom('Page', 'layout_id=?', array($this->id));
     }
-    
+        
     /* We need these before PHP 5.3. Older do not have late static binding. */
     static function find($params=null, $class=__CLASS__) {
         return parent::find($params, $class);
