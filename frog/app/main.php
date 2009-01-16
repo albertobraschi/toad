@@ -198,4 +198,6 @@ function main()
 } 
 
 /* Ok come on! let's go! (movie: Hacker's) */
+ob_start();
 main();
+ob_end_flush();
