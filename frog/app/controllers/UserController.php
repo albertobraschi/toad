@@ -29,7 +29,7 @@ class UserController extends Controller
         }
         
         $this->display('user/index', array(
-            'users' => User::findAll()
+            'users' => User::find()
         ));
     }
     
@@ -140,7 +140,7 @@ class UserController extends Controller
             unset($data['password'], $data['confirm']);
         }
         
-        $user = Record::findByIdFrom('User', $id);
+        $user = User::findById($id);
         $user->setFromData($data);
         
         if ($user->save()) {
@@ -173,7 +173,7 @@ class UserController extends Controller
         // security (dont delete the first admin)
         if ($id > 1) {
             // find the user to delete
-            if ($user = Record::findByIdFrom('User', $id)) {
+            if ($user = User::findById($id)) {
                 if ($user->delete()) {
                     Flash::set('success', __('User <strong>:name</strong> has been deleted!', array(':name' => $user->name)));                    
                 } else {
@@ -189,4 +189,4 @@ class UserController extends Controller
         redirect(get_url('user'));
     }
 
-} // end UserController class
+}

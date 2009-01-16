@@ -86,7 +86,7 @@ class Page
 
     protected function setUrl()
     {
-        $this->url = trim($this->parent->url .'/'. $this->slug, '/');
+        $this->url = trim($this->parent->url . '/'. $this->slug, '/');
     }
 
     public function id() { return $this->id; }

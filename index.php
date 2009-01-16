@@ -1,12 +1,13 @@
 <?php
 
-
 define('FROG_ROOT', dirname(__FILE__));
 define('CORE_ROOT', FROG_ROOT . '/frog');
 define('APP_PATH',  CORE_ROOT . '/app');
-define('BASE_URL',  URL_PUBLIC . (USE_MOD_REWRITE ? '': '?'));
 
 require FROG_ROOT . '/config.php';
+
+define('BASE_URL',  URL_PUBLIC . (USE_MOD_REWRITE ? '': '?'));
+
 require CORE_ROOT . '/Framework.php';
 
 /* If you have installed frog and see this line, you can comment it or delete it. */

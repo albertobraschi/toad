@@ -399,7 +399,7 @@ class Record extends Overload
         if (defined(get_class($this) . '::TABLE_NAME')) {
             return TABLE_PREFIX . constant(get_class($this) . '::TABLE_NAME');                
         } else {
-            return TABLE_PREFIX . Record_Inflector::tableize(get_class($this));            
+            return TABLE_PREFIX . Inflector::tableize(get_class($this));            
         }
     }
     

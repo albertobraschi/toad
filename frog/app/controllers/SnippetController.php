@@ -27,7 +27,7 @@ class SnippetController extends Controller
     function index()
     {
         $this->display('snippet/index', array(
-            'snippets' => Record::findAllFrom('Snippet', '1=1 ORDER BY position')
+            'snippets' => Snippet::find(array('order' => 'position'))
         ));
     }
     
@@ -121,7 +121,7 @@ class SnippetController extends Controller
     function delete($id)
     {
         // find the user to delete
-        if ($snippet = Record::findByIdFrom('Snippet', $id)) {
+        if ($snippet = Snippet::findById($id)) {
             if ($snippet->delete()) {
                 Flash::set('success', __('Snippet :name has been deleted!', array(':name'=>$snippet->name)));     
                 Observer::notify('snippet_after_delete', $snippet);
@@ -139,10 +139,10 @@ class SnippetController extends Controller
         parse_str($_POST['data']);
         
         foreach ($snippets as $position => $snippet_id) {
-            $snippet = Record::findByIdFrom('Snippet', $snippet_id);
+            $snippet = Snippet::findById($snippet_id);
             $snippet->position = (int) $position + 1;
             $snippet->save();
         }
     }
 
-} // end SnippetController class
+}

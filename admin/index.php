@@ -21,7 +21,7 @@ define('COOKIE_SECURE', false);
 
 //  Init ---------------------------------------------------------------------
 
-include FROG_ROOT.'/config.php';
+include FROG_ROOT . '/config.php';
 
 define('BASE_URL', URL_PUBLIC . ADMIN_DIR . (USE_MOD_REWRITE ? '/': '/?/'));
 

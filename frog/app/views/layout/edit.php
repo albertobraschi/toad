@@ -21,7 +21,7 @@
     </p>
     <p class="clear">&nbsp;</p>
 <?php if (isset($layout->updated_on)) { ?>
-    <p style="clear: left"><small><?php echo __('Last updated by'); ?> <?php echo $layout->updated_by_name; ?> <?php echo __('on'); ?> <?php echo date('D, j M Y', strtotime($layout->updated_on)); ?></small></p>
+    <p style="clear: left"><small><?php echo __('Last updated by'); ?> <?php echo $layout->updater()->name() ?> <?php echo __('on'); ?> <?php echo date('D, j M Y', strtotime($layout->updated_on)); ?></small></p>
 <?php } ?>
   </div>
   <p class="buttons">

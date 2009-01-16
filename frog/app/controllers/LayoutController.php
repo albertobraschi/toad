@@ -13,7 +13,7 @@ class LayoutController extends Controller
     function __construct()
     {
         AuthUser::load();
-        if ( ! AuthUser::isLoggedIn()) {
+        if (! AuthUser::isLoggedIn()) {
             redirect(get_url('login'));
         } else if (!AuthUser::hasPermission('administrator') && !AuthUser::hasPermission('developer')) {
             Flash::set('error', __('You do not have permission to access the requested page!'));
@@ -27,7 +27,7 @@ class LayoutController extends Controller
     function index()
     {
         $this->display('layout/index', array(
-            'layouts' => Record::findAllFrom('Layout', '1=1 ORDER BY position')
+            'layouts' => Layout::find(array('order' => 'position'))
         ));
     }
     
@@ -58,8 +58,7 @@ class LayoutController extends Controller
         
         $layout = new Layout($data);
         
-        if (!$layout->save())
-        {
+        if (!$layout->save()) {
             Flash::set('error', __('Layout has not been added. Name must be unique!'));
             redirect(get_url('layout/add'));
         } else {
@@ -96,10 +95,10 @@ class LayoutController extends Controller
     
     function _edit($id)
     {
-        $layout = Record::findByIdFrom('Layout', $id);
+        $layout = Layout::findById($id);
         $layout->setFromData($_POST['layout']);
-        
-        if (!$layout->save()) {
+
+        if (! $layout->save()) {
             Flash::set('error', __('Layout has not been saved. Name must be unique!'));
             redirect(get_url('layout/edit/'.$id));
         } else {

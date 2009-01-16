@@ -36,6 +36,9 @@ class Page extends Record
     public $position;
     public $is_protected;
     
+    /* Stuff from Page class */
+    /* Stuff from Page class ends */
+    
     public function beforeInsert()
     {
         $this->created_on = date('Y-m-d H:i:s');

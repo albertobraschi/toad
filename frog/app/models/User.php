@@ -4,7 +4,7 @@
  * class User
  *
  * @author Philippe Archambault <philippe.archambault@gmail.com>
- * @since  0.1
+ * @author Mika Tuupola <tuupola@appelsiini.net>
  */
 
 class User extends Record
@@ -58,56 +58,18 @@ class User extends Record
         $this->updated_on = date('Y-m-d H:i:s');
         return true;
     }
-    
-    public static function find($args = null)
-    {
         
-        // Collect attributes...
-        $where    = isset($args['where']) ? trim($args['where']) : '';
-        $order_by = isset($args['order']) ? trim($args['order']) : '';
-        $offset   = isset($args['offset']) ? (int) $args['offset'] : 0;
-        $limit    = isset($args['limit']) ? (int) $args['limit'] : 0;
-        
-        // Prepare query parts
-        $where_string = empty($where) ? '' : "WHERE $where";
-        $order_by_string = empty($order_by) ? '' : "ORDER BY $order_by";
-        $limit_string = $limit > 0 ? "LIMIT $offset, $limit" : '';
-        
-        $tablename = self::tableNameFromClassName('User');
-        
-        // Prepare SQL
-        $sql = "SELECT $tablename.*, author.name AS created_by_name, updator.name AS updated_by_name FROM $tablename".
-               " LEFT JOIN $tablename AS author ON $tablename.created_by_id = author.id".
-               " LEFT JOIN $tablename AS updator ON $tablename.updated_by_id = updator.id".
-               " $where_string $order_by_string $limit_string";
-        
-        $stmt = self::$__CONN__->prepare($sql);
-        $stmt->execute();
-        
-        // Run!
-        if ($limit == 1) {
-            return $stmt->fetchObject('User');
-        } else {
-            $objects = array();
-            while ($object = $stmt->fetchObject('User')) {
-                $objects[] = $object;
-            }
-            return $objects;
-        }
-    
+    /* We need these before PHP 5.3. Older do not have late static binding. */
+    static function find($params=null, $class=__CLASS__) {
+        return parent::find($params, $class);
+    }
+
+    static function findById($id, $class=__CLASS__) {
+        return parent::findById($id, $class);
     }
     
-    public static function findAll($args = null)
-    {
-        return self::find($args);
-    }
-    
-    public static function findById($id)
-    {
-        return self::find(array(
-            'where' => self::tableNameFromClassName('User').'.id='.(int)$id,
-            'limit' => 1
-        ));
+    static function count($params=null, $class=__CLASS__) {
+        return parent::count($params, $class);
     }
 
 } // end User class
