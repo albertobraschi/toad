@@ -217,7 +217,37 @@ final class Dispatcher
 } // end Dispatcher class
 
 
-class Record
+/**
+ * Gives automatic setter and getter methods.
+ *
+ * $object->property('foo');
+ * print $object->property();
+ *
+ */
+class Overload {
+
+    public function __call($method, $params) {
+
+        $var      = get_object_vars($this);
+        $retval   = false;
+        $property =  Inflector::property($method);
+
+        if (array_key_exists($property, $var)) {
+            if (count($params)) {
+                $this->$property = $params[0];
+                $retval = true;
+            } else {
+                $retval = $this->$property;
+            };
+        }
+        
+        return($retval);  
+    }
+}
+
+
+
+class Record extends Overload
 {
     const PARAM_BOOL = 5;
     const PARAM_NULL = 0;
@@ -302,14 +332,25 @@ class Record
     public static $__CONN__ = false;
     public static $__QUERIES__ = array();
     
-    final public static function connection($connection)
-    {
-        self::$__CONN__ = $connection;
-    }
+    public $id;
     
+    
+    /**
+     * Set or get the database connection.
+     */
+     
+    final public static function connection() {
+        if (func_num_args() > 0) {
+            self::$__CONN__ = func_get_arg(0);
+        } else {
+            return self::$__CONN__;            
+        }
+    }
+
+    /* TODO: For BC. Remove later. */
     final public static function getConnection()
     {
-        return self::$__CONN__;
+        return self::connection();
     }
     
     final public static function logQuery($sql)
@@ -353,6 +394,15 @@ class Record
         }
     }
     
+    public function table() {
+        /* Constant TABLE defined in model overrides the default table name. */
+        if (defined(get_class($this) . '::TABLE_NAME')) {
+            return TABLE_PREFIX . constant(get_class($this) . '::TABLE_NAME');                
+        } else {
+            return TABLE_PREFIX . Record_Inflector::tableize(get_class($this));            
+        }
+    }
+    
     final public static function escape($value)
     {
         return self::$__CONN__->quote($value);
@@ -382,86 +432,70 @@ class Record
      *
      * @return boolean
      */
-    public function save()
-    {
-        if ( ! $this->beforeSave()) return false;
-        
-        $value_of = array();
-        
-        if (empty($this->id)) {
-            
-            if ( ! $this->beforeInsert()) return false;
-            
-            $columns = $this->getColumns();
-            
-            // escape and format for SQL insert query
-            foreach ($columns as $column) {
-                if (isset($this->$column)) {
-                    $value_of[$column] = self::$__CONN__->quote($this->$column);
-                }
-            }
-            
-            $sql = 'INSERT INTO '.self::tableNameFromClassName(get_class($this)).' ('
-                 . implode(', ', array_keys($value_of)).') VALUES ('.implode(', ', array_values($value_of)).')';
-            //Flash::set('error', $sql);
-            $return = self::$__CONN__->exec($sql) !== false;
-            $this->id = self::lastInsertId(); 
+     public function save() {
+         if (!$this->beforeSave()) return false;
+     
+         $value_of = array();
+
+         if (! $this->id()) {
+             if (! $this->beforeInsert()) return false;
+                     
+             /* Escape values. */
+             foreach ($this->columns() as $column) {
+                 if (isset($this->$column)) {
+                     $value_of[$column] = self::connection()->quote($this->$column);
+                 }
+             }
+         
+             $columns = implode(', ', array_keys($value_of));
+             $values  = implode(', ', array_values($value_of));
+             $sql     = sprintf('INSERT INTO %s (%s) VALUES (%s)', $this->table(), $columns, $values);
+
+             /* Force retval to be boolean. */
+             $retval = self::connection()->exec($sql) !== false;
+             /* This wont always work. */
+             $this->id = self::lastInsertId(); 
+          
+             if (! $this->afterInsert()) return false;
+     
+         } else {
+             if (! $this->beforeUpdate()) return false;
+                     
+             /* Escape values. */
+             foreach ($this->columns() as $column) {
+                 if (isset($this->$column)) {
+                     $value_of[$column] = $column . '=' . self::connection()->quote($this->$column);
+                 }
+             }
+         
+             unset($value_of['id']);
+
+             $items   = implode(', ', $value_of);
+             $sql     = sprintf('UPDATE %s SET %s WHERE id=%d', $this->table(), $items, $this->id());
+         
+             /* Force retval to be boolean. */
+             $retval = self::connection()->exec($sql) !== false;
+         
+             if (!$this->afterUpdate()) return false;
+         }
+     
+         return $retval;
+     }
+
+     public function delete() {
+         if (!$this->beforeDelete()) return false;
+     
+         $sql = sprintf('DELETE FROM %s WHERE id=%d LIMIT 1', $this->table(), $this->id());
+
+         $retval = self::connection()->exec($sql) !== false;
+
+         if (!$this->afterDelete()) {
+             $this->save();
+             $retval = false;
+         }
              
-            if ( ! $this->afterInsert()) return false;
-        
-        } else {
-            
-            if ( ! $this->beforeUpdate()) return false;
-            
-            $columns = $this->getColumns();
-            
-            // escape and format for SQL update query
-            foreach ($columns as $column) {
-                if (isset($this->$column)) {
-                    $value_of[$column] = $column.'='.self::$__CONN__->quote($this->$column);
-                }
-            }
-            
-            unset($value_of['id']);
-            
-            $sql = 'UPDATE '.self::tableNameFromClassName(get_class($this)).' SET '
-                 . implode(', ', $value_of).' WHERE id = '.$this->id;
-            //Flash::set('error', $sql);
-            $return = self::$__CONN__->exec($sql) !== false;
-            
-            if ( ! $this->afterUpdate()) return false;
-        }
-        
-        self::logQuery($sql);
-        
-        // Run it !!...
-        return $return;
-    }
-
-    /**
-     * Generates a delete string and execute it
-     *
-     * @param string $table the table name
-     * @param string $where the query condition
-     * @return boolean
-     */
-    public function delete()
-    {
-        if ( ! $this->beforeDelete()) return false;
-        $sql = 'DELETE FROM '.self::tableNameFromClassName(get_class($this))
-             . ' WHERE id='.self::$__CONN__->quote($this->id);
-
-        // Run it !!...
-        $return = self::$__CONN__->exec($sql) !== false;
-        if ( ! $this->afterDelete()) {
-            $this->save();
-            return false;
-        }
-        
-        self::logQuery($sql);
-        
-        return $return;
-    }
+         return $retval;
+     }
     
     public function beforeSave() { return true; }
     public function beforeInsert() { return true; }
@@ -477,10 +511,18 @@ class Record
      * it is a good idea to rewrite this method in all your model classes
      * used in save() for creating the insert and/or update sql query
      */
+     
+     public function columns() {
+         return array_keys(get_object_vars($this));
+     }
+     
+    /* TODO: For BC. */
     public function getColumns()
     {
         return array_keys(get_object_vars($this));
     }
+    
+    
     
     public static function insert($class_name, $data)
     {
@@ -576,6 +618,74 @@ class Record
         
         return (int) $stmt->fetchColumn();
     }
+
+    /* TODO: hack while we are waiting for PHP 5.3, expect extending  */
+    /* class to have static function like the following:              */
+    /*    static function find($params='', $class=__CLASS__) {        */
+    /*        return parent::find($params, $class);                   */
+    /*    }                                                           */
+
+    public static function count($params=null, $class=__CLASS__) {
+        $params['select'] = 'COUNT(*)';
+        $sql = Record::buildSql($params, $class);
+        return self::connection()->query($sql, PDO::FETCH_COLUMN, 0)->fetch();
+    }
+
+    public static function findById($id, $class=__CLASS__) {
+        $params['where'] = sprintf('id=%d', $id);
+        $sql = Record::buildSql($params, $class);
+        return self::connection()->query($sql, PDO::FETCH_CLASS, $class)->fetch();
+    }
+    
+    public static function find($params=null, $class=__CLASS__) {                                                             
+        $sql = Record::buildSql($params, $class);
+        $retval = array();
+        foreach (self::connection()->query($sql, PDO::FETCH_CLASS, $class) as $object) {
+            $retval[] = $object;
+        }
+        return $retval;
+    }
+    
+    private static function buildSql($params, $class) {
+        $dummy  = new $class;        
+        $table  = $dummy->table();
+
+        $select = isset($params['select']) ? $params['select'] :  implode(',', $dummy->columns());
+        
+        $sql = "SELECT $select FROM $table ";
+        
+        if (isset($params['where'])) {
+            $sql .= " WHERE " . $params['where'];
+        }
+
+        if (isset($params['order_by'])) {
+            $sql .= " ORDER BY " . $params['order_by'];
+        } elseif (isset($params['order'])) {
+            $sql .= " ORDER BY " . $params['order'];
+        }
+        
+        if (isset($params['limit'])) {
+            if (is_array($params['limit'])) {
+                $from  = $params['limit'][0];
+                $count = $params['limit'][1];
+            } else {
+                /* split by whitespace and/or comma */
+                $temp = preg_split ('/[\s,]+/', $params['limit'], 2);
+                if (count($temp) == 2) {
+                  $from  = $temp[0];
+                  $count = $temp[1];
+                } else {
+                  $from  = 0;
+                  $count = $temp[0];
+                }
+            }
+            $sql .= "LIMIT $from, $count ";
+        }
+        return $sql;
+    }    
+
+    
+    
 
 }
 
@@ -939,40 +1049,59 @@ final class Flash
 } // end Flash class
 
 
-final class Inflector 
-{
-    /**
-     *  Return an CamelizeSyntaxed (LikeThisDearReader) from something like_this_dear_reader.
-     *
-     * @param string $string Word to camelize
-     * @return string Camelized word. LikeThis.
-     */
-    public static function camelize($string)
-    {
-        return str_replace(' ','',ucwords(str_replace('_',' ', $string)));
-    }
+final class Inflector {
 
-    /**
-     * Return an underscore_syntaxed (like_this_dear_reader) from something LikeThisDearReader.
-     *
-     * @param  string $string CamelCased word to be "underscorized"
-     * @return string Underscored version of the $string
-     */
-    public static function underscore($string)
-    {
-        return strtolower(preg_replace('/(?<=\\w)([A-Z])/', '_\\1', $string));
+    public function __construct() {
     }
     
-    /**
-     * Return an Humanized syntaxed (Like this dear reader) from something like_this_dear_reader.
-     *
-     * @param  string $string CamelCased word to be "underscorized"
-     * @return string Underscored version of the $string
-     */
-    public static function humanize($string)
-    {
-        return ucfirst(str_replace('_', ' ', $string));
+    static function pluralize($word) {
+        $pluralized = $word . "s";
+        return $pluralized;
     }
+    
+    static function singularize($word) {
+        $singularized = substr($word, 0, -1); 
+        return $singularized;
+    }
+
+    static function camelize($word) {
+        $camelized = str_replace(" ", "", ucwords(str_replace("_", " ", $word)));
+        return $camelized;
+    }
+    
+    static function underscore($word) {
+        $underscored = strtolower(preg_replace('/(?<=\\w)([A-Z])/', '_\\1', $word));
+        $underscored = strtolower(preg_replace('/([0-9])([a-z])/', '\\1_\\2', $underscored));        
+        $underscored = strtolower(preg_replace('/([a-z])([0-9])/', '\\1_\\2', $underscored));        
+        $underscored = preg_replace('/__/', '_', $underscored);        
+        return $underscored;
+    }
+    
+    static function humanize($word) {
+        $humanized = ucwords(str_replace("_", " ", $word));
+        return $humanized;
+    }
+    
+    static function classify($table) {
+        $classified = Inflector::camelize(Inflector::singularize($table));
+        return $classified;
+    }
+    
+    static function tableize($class) {
+        $tableized = Inflector::pluralize(Inflector::underscore($class));
+        return $tableized;
+    }
+    
+    static function variable($string) {
+        $variable = Inflector::underscore($string);
+        return $variable;
+    }
+
+    static function property($string) {
+        $property = Inflector::underscore($string);
+        return $property;
+    }
+
 }
 
 // ----------------------------------------------------------------
