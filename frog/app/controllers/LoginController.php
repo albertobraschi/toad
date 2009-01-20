@@ -96,11 +96,13 @@ class LoginController extends Controller
     
     function _checkVersion()
     {
-        $v = file_get_contents('http://www.madebyfrog.com/version/');
-        if ($v > FROG_VERSION) {
-            Flash::set('error', __('<b>Information!</b> New Frog version available (v. <b>:version</b>)! Visit <a href="http://www.madebyfrog.com/">http://www.madebyfrog.com/</a> to upgrade your version!',
-                       array(':version' => $v )));
+        if (CHECK_UPDATES) {
+            $v = file_get_contents('http://www.madebyfrog.com/version/');
+            if ($v > FROG_VERSION) {
+                Flash::set('error', __('<b>Information!</b> New Frog version available (v. <b>:version</b>)! Visit <a href="http://www.madebyfrog.com/">http://www.madebyfrog.com/</a> to upgrade your version!',
+                           array(':version' => $v )));
+            }            
         }
     }
     
-} // end LoginController class
+}
