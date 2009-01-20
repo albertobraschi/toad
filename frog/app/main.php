@@ -1,9 +1,5 @@
 <?php
 
-/* TODO: Get rid of this class. */
-#require APP_PATH . '/classes/Page.php';
-//require APP_PATH . '/models/Page.php';
-
 if (!defined('HELPER_PATH')) define('HELPER_PATH', CORE_ROOT . '/helpers');
 if (!defined('URL_SUFFIX'))  define('URL_SUFFIX',  '');
 
@@ -29,84 +25,6 @@ function explode_uri($uri)
 {
     return preg_split('/\//', $uri, -1, PREG_SPLIT_NO_EMPTY);
 }
-
-/* TODO: This should be part of Page model. */
-function find_page_by_uri($uri) 
-{
-/*
-    global $__FROG_CONN__;
-    
-    $uri = trim($uri, '/');
-    
-    $has_behavior = false;
-    
-    $urls = array_merge(array(''), explode_uri($uri));
-    $url = '';
-    $parent = new Page;
-    $parent->id(0);
-    
-    foreach ($urls as $page_slug) {
-        $url = ltrim($url . '/' . $page_slug, '/');
-        //if ($page = find_page_by_slug($page_slug, $parent)) {
-        if ($page = Page::findBySlugAndParentId($page_slug, $parent->id())) {
-            // check for behavior
-            if ($page->behavior_id != '') {
-                // add a instance of the behavior with the name of the behavior 
-                $params = explode_uri(substr($uri, strlen($url)));
-                $page->{$page->behavior_id} = Behavior::load($page->behavior_id, $page, $params);
-                
-                return $page;
-            }
-        } else {
-            break;
-        }
-        
-        $parent = $page;  
-    } 
-    
-    return (!$page && $has_behavior) ? $parent: $page;
-    */
-} 
-
-/* TODO: This should be part of Page model. */
-/*
-function find_page_by_slug($slug, &$parent)
-{
-    global $__FROG_CONN__;
-    
-    $page_class = 'Page';
-    
-    $parent_id = $parent ? $parent->id: 0;
-    
-    $sql = 'SELECT page.*, author.name AS author, author.id AS author_id, updator.name AS updator, updator.id AS updator_id '
-         . 'FROM '.TABLE_PREFIX.'page AS page '
-         . 'LEFT JOIN '.TABLE_PREFIX.'user AS author ON author.id = page.created_by_id '
-         . 'LEFT JOIN '.TABLE_PREFIX.'user AS updator ON updator.id = page.updated_by_id '
-         . 'WHERE slug = ? AND parent_id = ? AND (status_id='.Page::STATUS_REVIEWED.' OR status_id='.Page::STATUS_PUBLISHED.' OR status_id='.Page::STATUS_HIDDEN.')';
-    
-    $stmt = $__FROG_CONN__->prepare($sql);
-    
-    $stmt->execute(array($slug, $parent_id));
-    
-    if ($page = $stmt->fetchObject()) {
-        // hook to be able to redefine the page class with behavior
-        if (! empty($parent->behavior_id)) {
-            // will return Page by default (if not found!)
-            $page_class = Behavior::loadPageHack($parent->behavior_id);
-        }
-        
-        // create the object page
-        $page = new $page_class($page, $parent);
-        
-        // assign all is parts
-        $page->part = get_parts($page->id);
-        
-        return $page;
-    } else {
-        return false;
-    }
-}
-*/
 
 function get_parts($page_id)
 {
@@ -194,7 +112,7 @@ function main()
         Observer::notify('page_found', $page);
         $page->show();
     } else {
-         page_not_found();   
+        page_not_found();   
     }
 } 
 

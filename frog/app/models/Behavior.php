@@ -61,8 +61,8 @@ class Behavior
      */
     public static function load($behavior_id, &$page, $params)
     {
-        if ( ! empty(self::$behaviors[$behavior_id])) {
-            $file = CORE_ROOT.'/plugins/'.self::$behaviors[$behavior_id];
+        if (! empty(self::$behaviors[$behavior_id])) {
+            $file = CORE_ROOT . '/plugins/' . self::$behaviors[$behavior_id];
             
             if (isset(self::$loaded_files[$file])) {
                 return new $behavior_id($page, $params);                

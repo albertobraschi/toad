@@ -2,6 +2,10 @@
 
 class Archive
 {
+    
+    protected $page;
+    protected $params;
+        
     public function __construct(&$page, $params)
     {
         $this->page =& $page;
@@ -41,28 +45,26 @@ class Archive
         global $__FROG_CONN__;
         
         $page = $this->page->children(array(
-            'where' => "behavior_id = 'archive_{$interval}_index'",
+            'where' => "behavior_id='archive_{$interval}_index'",
             'limit' => 1
-        ), array(), true);
-        
-        if ($page)
-        {
+        ), true);
+        $page = array_pop($page);
+        if ($page) {
             $this->page = $page;
             $month = isset($params[1]) ? (int)$params[1]: 1;
             $day = isset($params[2]) ? (int)$params[2]: 1;
 
             $this->page->time = mktime(0, 0, 0, $month, $day, (int)$params[0]);
-        }
-        else
-        {
+        } else {
             page_not_found();
         }
     }
     
     private function _displayPage($slug)
     {
-        if ( ! $this->page = Page::findBySlugAndParentId($slug, $this->page->id()))
-            page_not_found();
+        if (! $this->page = Page::findBySlugAndParentId($slug, $this->page->id())) {
+            page_not_found();            
+        }
     }
     
     function get()
@@ -132,10 +134,9 @@ class Archive
 
 class PageArchive extends Page
 {
-    //    protected function setUrl()
     public function url()
     {
-        return trim($this->parent->url() . date('/Y/m/d/', strtotime($this->created_on)). $this->slug, '/');
+        return trim($this->parent()->url(false) . date('/Y/m/d/', strtotime($this->createdOn())) . $this->slug(), '/') . URL_SUFFIX;
     }
     
     public function title() { return isset($this->time) ? strftime($this->title, $this->time): $this->title; }

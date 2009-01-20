@@ -35,6 +35,8 @@ class Page extends Record
     public $position;
     public $is_protected;
     
+    public $behavior;
+    
     /* Methods for Record class. */
     
     public function columns() {
@@ -156,15 +158,25 @@ class Page extends Record
     }
     
     public function children($params=array(), $include_hidden = false) {
+        if (isset($params['where'])) {
+            $params['where'] .= ' AND ';
+        } else {
+            $params['where'] = '';            
+        }
         if ($include_hidden) {
-            $params['where'] = sprintf("parent_id=%d AND status_id>=%d", 
+            $params['where'] .= sprintf("parent_id=%d AND status_id>=%d", 
                                         $this->id(), Page::STATUS_PUBLISHED);                        
         } else {
-            $params['where'] = sprintf("parent_id=%d AND status_id<%d", 
+            $params['where'] .= sprintf("parent_id=%d AND status_id<%d", 
                                         $this->id(), Page::STATUS_HIDDEN);                        
         }
         
-        return Page::find($params);
+        $class = __CLASS__;
+        if ($this->behaviorId()) {
+            $class = Behavior::loadPageHack($this->behaviorId());
+        }
+        
+        return Page::find($params, $class);
     }
     
     public function parts($name=null) {
@@ -190,12 +202,17 @@ class Page extends Record
         }
     }
     
-    public function url() {        
+    public function url($with_suffix = true) {        
         if ($this->parent()) {
-            return trim($this->parent()->url() . '/'. $this->slug(), '/') . URL_SUFFIX;            
+            if ($with_suffix) {
+                $url = trim($this->parent()->url(false) . '/'. $this->slug(), '/') . URL_SUFFIX;                
+            } else {
+                $url = trim($this->parent()->url(false) . '/'. $this->slug(), '/');               
+            }
         } else {
-            return BASE_URL . trim('/'. $this->slug(), '/');            
+            $url = BASE_URL . trim('/'. $this->slug(), '/');            
         }
+        return $url;
     }
     
     public function link($label=null, $options='')
@@ -285,7 +302,7 @@ class Page extends Record
     static function find($params=null, $class=__CLASS__) {
         /* Assume we should call Record finder. */
         if (is_array($params)) {
-            return parent::find($params, $class);            
+            return parent::find($params, $class);
         } else {
         /* Maintain BC. Assume string mean find by URI. */    
             return Page::findByUri($params);
@@ -317,6 +334,7 @@ class Page extends Record
 
     public static function findByUri($uri, $class=__CLASS__) {
 
+        //print "Page::findByUri($uri)";
         $uri = trim($uri, '/');
 
         $has_behavior = false;
@@ -331,9 +349,11 @@ class Page extends Record
             $url = ltrim($url . '/' . $page_slug, '/');
             if ($page = Page::findBySlugAndParentId($page_slug, $parent->id())) {
                 if ($page->behaviorId()) {
+                    $has_behavior= true;
                     // add a instance of the behavior with the name of the behavior 
                     $params = explode_uri(substr($uri, strlen($url)));
-                    $page->{$page->behavior_id} = Behavior::load($page->behavior_id, $page, $params);
+                    print_r($params);
+                    $page->behavior(Behavior::load($page->behaviorId(), $page, $params));
                     return $page;
                 }
             } else {
@@ -350,9 +370,9 @@ class Page extends Record
         if ($parent && $parent->behaviorId()) {
             $class = Behavior::loadPageHack($parent->behaviorId());
         }
-        
         $params['where'] = sprintf("slug=%s AND parent_id=%d", self::connection()->quote($slug), $parent_id);
         $sql = Record::buildSql($params, $class);
+       // print_r(self::connection()->query($sql, PDO::FETCH_CLASS, $class)->fetch());
         return self::connection()->query($sql, PDO::FETCH_CLASS, $class)->fetch();
     }
     

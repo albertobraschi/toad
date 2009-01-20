@@ -1,0 +1,15 @@
+Simple CMS written in PHP5 (fork of "Frog CMS":http://www.madebyfrog.com/).
+
+h3. Goals:
+
+* Clean up codebase.
+* Move from Prototype to jQuery.
+* Rewrite the behavior system from scratch.
+  
+
+h3. Changed from original:
+
+* More Active Record like Record class in Framework.php
+* Removed lot of redundant hand written SQL.
+* Less error prone coding standards.
+
